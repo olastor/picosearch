@@ -1,0 +1,15 @@
+{
+  "name": "examples",
+  "version": "1.0.0",
+  "description": "",
+  "main": "english.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "porter-stemmer": "^0.9.1",
+    "stopword": "^2.0.6"
+  }
+}
