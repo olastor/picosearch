@@ -1,8 +1,12 @@
 {
   "name": "tiny-search",
   "version": "0.1.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Tiny, customizable module for creating basic full-text search indices and queries using the BM25 algorithm.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest",
