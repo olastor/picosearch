@@ -1,4 +1,4 @@
-interface Options {
+interface SearchOptions {
   tokenizer: (s: string) => string[];
   stemmer: null | ((s: string) => string);
   lowercase: boolean;
@@ -23,7 +23,7 @@ interface SearchResult {
   score: number;
 }
 
-export const DEFAULT_SEARCH_OPTIONS: Options = {
+export const DEFAULT_SEARCH_OPTIONS: SearchOptions = {
   tokenizer: (s: string): string[] => s.split(/\s+/g),
   stemmer: null,
   customTransformation: null,
@@ -40,7 +40,7 @@ export const DEFAULT_SEARCH_OPTIONS: Options = {
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 const stripPunctuation = (s: string): string => s.replace(REGEXP_PATTERN_PUNCT, '')
 
-const checkOptions = (options: Options): Options => {
+const checkSearchOptions = (options: SearchOptions): SearchOptions => {
   const optionsValid = {
     ...DEFAULT_SEARCH_OPTIONS,
     ...options
@@ -49,7 +49,7 @@ const checkOptions = (options: Options): Options => {
   return optionsValid
 }
 
-const preprocessText = (text: string, options: Options): string[] => {
+const preprocessText = (text: string, options: SearchOptions): string[] => {
   const tokens = options.tokenizer(text)
   const result: string[] = [] 
 
@@ -94,9 +94,9 @@ const preprocessText = (text: string, options: Options): string[] => {
 
 export const buildSearchIndex = (
   docs: string[], 
-  options: Options = DEFAULT_SEARCH_OPTIONS
+  options: SearchOptions = DEFAULT_SEARCH_OPTIONS
 ): TextIndex => {
-  const optionsValid = checkOptions(options)
+  const optionsValid = checkSearchOptions(options)
 
   const newIndex: TextIndex = {
     numOfDocs: docs.length,
@@ -140,10 +140,10 @@ export const buildSearchIndex = (
 export const querySearchIndex = (
   query: string, 
   index: TextIndex, 
-  options: Options = DEFAULT_SEARCH_OPTIONS, 
+  options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
   size = 10
 ): SearchResult[] => {
-  const optionsValid = checkOptions(options)
+  const optionsValid = checkSearchOptions(options)
 
   const queryTokens = preprocessText(query, optionsValid)
 
