@@ -5,6 +5,25 @@ const testDocs1 = ['Shane', 'Shane C', 'Shane P Connelly', 'Shane Connelly', 'Sh
 
 describe('TinySearch', () => {
   describe('Options', () => {
+    test('tokenizer should work', () => {
+      const options = {
+        ...DEFAULT_SEARCH_OPTIONS,
+        tokenizer: (s: string) => s.split('_'),
+        bm25: {
+          b: 0.5,
+          k1: 0
+        }
+      }
+
+      const index1 = buildSearchIndex(['tommy_tommy', 'tommy_tommy', 'tommy_tommy'], options)
+      const results = querySearchIndex('tommy', index1, options)
+      expect(results).toEqual([
+        { docId: 0, score: 0.13353139262452257 },
+        { docId: 1, score: 0.13353139262452257 },
+        { docId: 2, score: 0.13353139262452257 }
+      ])
+    })
+
     test('lowercasing should work', () => {
       const options = {
         ...DEFAULT_SEARCH_OPTIONS,
@@ -97,6 +116,23 @@ describe('TinySearch', () => {
         { docId: 0, score: 0.13353139262452257 },
         { docId: 1, score: 0.13353139262452257 },
         { docId: 2, score: 0.13353139262452257 }
+      ])
+    })
+
+    test('size limit should work', () => {
+      const options = {
+        ...DEFAULT_SEARCH_OPTIONS,
+        bm25: {
+          b: 0.5,
+          k1: 0
+        }
+      }
+
+      const index1 = buildSearchIndex(['shane', 'shane', 'shane'], options)
+      const results = querySearchIndex('shane', index1, options, 2)
+      expect(results).toEqual([
+        { docId: 0, score: 0.13353139262452257 },
+        { docId: 1, score: 0.13353139262452257 }
       ])
     })
   })
