@@ -60,9 +60,19 @@ See [examples/](https://github.com/olastor/tiny-search/tree/main/examples).
 
 ## API
 
-### `buildSearchIndex(docs: string[], options)`
+### `buildSearchIndex(docs, options)`
 
-### `querySearchIndex(query: string, index: TextIndex, options, size = 10)`
+- `docs: string[]`
+- `options: SearchOptions`
+- returns 
+
+### `querySearchIndex(query, index, options, size)`
+
+- `query: string`
+- `index: string`
+- `options: SearchOptions`
+- `size: number`
+- returns
 
 ```javascript
 const DEFAULT_SEARCH_OPTIONS = {
