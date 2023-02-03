@@ -1,4 +1,4 @@
-interface SearchOptions {
+export interface SearchOptions {
   tokenizer: (s: string) => string[];
   stemmer: null | ((s: string) => string);
   lowercase: boolean;
@@ -11,14 +11,14 @@ interface SearchOptions {
   }
 }
 
-interface TextIndex {
+export interface TextIndex {
   numOfDocs: number;
   docFreqsByToken: { [key: string]: [number, number][] };
   docLengths: { [key: string]: number };
   avgDocLength: number;
 }
 
-interface SearchResult {
+export interface SearchResult {
   docId: number;
   score: number;
 }
