@@ -58,7 +58,11 @@ console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
 
 See [examples/](https://github.com/olastor/tiny-search/tree/main/examples).
 
-## Configuration Options
+## API
+
+### `buildSearchIndex(docs: string[], options)`
+
+### `querySearchIndex(query: string, index: TextIndex, options, size = 10)`
 
 ```javascript
 const DEFAULT_SEARCH_OPTIONS = {
