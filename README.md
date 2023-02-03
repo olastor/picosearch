@@ -1,6 +1,6 @@
 # tiny-search
 
-Tiny, customizable module for creating basic full-text search indices and queries using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm. The focus is on providing a simple and reusable implementation and configuration with no dependencies.
+Tiny, customizable module for creating basic full-text search indices and queries using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm (used by Lucene, Elasticsearch etc.). The focus is on providing a simple and reusable implementation and configuration with no dependencies.
 
 - Stemmers and stopwords are **not** included and must be provided as config values.
 - JSON serializable indices
@@ -20,6 +20,38 @@ npm install tiny-search
 ```
 
 ## Quickstart
+
+```javascript
+const { buildSearchIndex, querySearchIndex } = require('../lib')
+const porterStemmer = require('porter-stemmer')
+const { eng } = require('stopword')
+
+sentences = [
+  'A man is eating food.',
+  'A man is buying bread.',
+  'The woman is riding a bike.',
+  'A woman is playing a violin.',
+  'Two men are biking.',
+  'Two women are biking.',
+]
+
+const searchOptions = {
+  stemmer: porterStemmer.stemmer,
+  lowercase: true,
+  stripPunctuation: true,
+  stopwords: eng
+}
+
+const searchQuery = 'who bought breads?'
+console.log(`Searching for "${searchQuery}"`)
+
+const searchIndex = buildSearchIndex(sentences, searchOptions)
+const searchResults = querySearchIndex(searchQuery, searchIndex, searchOptions)
+// => [ { docId: 1, score: 1.5404450409471488 } ]
+
+console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
+// => [ [ 'A man is buying bread.', 1.5404450409471488 ] ]
+```
 
 ## Configuration Options
 

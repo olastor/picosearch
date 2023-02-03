@@ -4,14 +4,11 @@ const { eng } = require('stopword')
 
 sentences = [
   'A man is eating food.',
-  'A man is eating a piece of bread.',
-  'The girl is carrying a baby.',
-  'A man is riding a horse.',
-  'A woman is playing violin.',
-  'Two men pushed carts through the woods.',
-  'A man is riding a white horse on an enclosed ground.',
-  'A monkey is playing drums.',
-  'A cheetah is running behind its prey.'
+  'A man is buying bread.',
+  'The woman is riding a bike.',
+  'A woman is playing a violin.',
+  'Two men are biking.',
+  'Two women are biking.',
 ]
 
 const searchOptions = {
@@ -21,7 +18,7 @@ const searchOptions = {
   stopwords: eng
 }
 
-const searchQuery = 'monkeys and bread'
+const searchQuery = 'who bought breads?'
 console.log(`Searching for "${searchQuery}"`)
 
 const searchIndex = buildSearchIndex(sentences, searchOptions)
