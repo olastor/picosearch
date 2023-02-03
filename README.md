@@ -21,6 +21,8 @@ npm install tiny-search
 
 ## Quickstart
 
+The following shows a basic example of how to create a new search index using an array of sentences and query it. For stemming, the porter stemmer and english stopwords are installed from existing packages, and provided to the options object.
+
 ```javascript
 const { buildSearchIndex, querySearchIndex } = require('../lib')
 const porterStemmer = require('porter-stemmer')
@@ -52,6 +54,9 @@ const searchResults = querySearchIndex(searchQuery, searchIndex, searchOptions)
 console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
 // => [ [ 'A man is buying bread.', 1.5404450409471488 ] ]
 ```
+
+
+See [examples/](https://github.com/olastor/tiny-search/tree/main/examples).
 
 ## Configuration Options
 
