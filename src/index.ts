@@ -23,7 +23,7 @@ interface SearchResult {
   score: number;
 }
 
-const DEFAULT_OPTIONS: Options = {
+export const DEFAULT_SEARCH_OPTIONS: Options = {
   tokenizer: (s: string): string[] => s.split(/\s+/g),
   stemmer: null,
   customTransformation: null,
@@ -31,13 +31,23 @@ const DEFAULT_OPTIONS: Options = {
   stripPunctuation: true,
   stopwords: [],
   bm25: {
-    k1: 2.0,
+    k1: 1.2,
     b: 0.75
   }
 }
 
+// eslint-disable-next-line no-useless-escape
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 const stripPunctuation = (s: string): string => s.replace(REGEXP_PATTERN_PUNCT, '')
+
+const checkOptions = (options: Options): Options => {
+  const optionsValid = {
+    ...DEFAULT_SEARCH_OPTIONS,
+    ...options
+  } 
+
+  return optionsValid
+}
 
 const preprocessText = (text: string, options: Options): string[] => {
   const tokens = options.tokenizer(text)
@@ -58,7 +68,11 @@ const preprocessText = (text: string, options: Options): string[] => {
 
     if (!newToken) continue;
 
-    if (options.stopwords && options.stopwords.length > 0 && options.stopwords.includes(newToken.toLowerCase())) {
+    if (
+      options.stopwords && 
+      options.stopwords.length > 0 && 
+      options.stopwords.includes(newToken.toLowerCase())
+    ) {
       continue
     }
 
@@ -78,13 +92,12 @@ const preprocessText = (text: string, options: Options): string[] => {
   return result
 }
 
-/**
-  * Builds a new index to be used for searching a set of texts / documents.
-  *
-  *
-  *
-  */
-export const buildSearchIndex = (docs: string[], options: Options = DEFAULT_OPTIONS): TextIndex => {
+export const buildSearchIndex = (
+  docs: string[], 
+  options: Options = DEFAULT_SEARCH_OPTIONS
+): TextIndex => {
+  const optionsValid = checkOptions(options)
+
   const newIndex: TextIndex = {
     numOfDocs: docs.length,
     docFreqsByToken: {},
@@ -95,15 +108,16 @@ export const buildSearchIndex = (docs: string[], options: Options = DEFAULT_OPTI
   // build a mapping, listing occurrences of a token in documents, grouped by the token
   const docsByToken: { [key: string]: number[] } = {}
   docs.forEach((text: string, i: number) => {
-    const tokens = preprocessText(text, options)
+    const tokens = preprocessText(text, optionsValid)
 
     newIndex.docLengths[i.toString()] = tokens.length
     newIndex.avgDocLength += tokens.length
 
     tokens.forEach(token => {
-      if (typeof newIndex.docFreqsByToken[token] === 'undefined') {
+      if (typeof docsByToken[token] === 'undefined') {
         docsByToken[token] = []
       }
+
       docsByToken[token].push(i)
     })
   })
@@ -123,9 +137,15 @@ export const buildSearchIndex = (docs: string[], options: Options = DEFAULT_OPTI
   return newIndex
 }
 
-export const querySearchIndex = (query: string, index: TextIndex, options: Options, size = 10, docs: string[] = null): SearchResult[] => {
-  // http://ipl.cs.aueb.gr/stougiannis/bm25.html
-  const queryTokens = preprocessText(query, options)
+export const querySearchIndex = (
+  query: string, 
+  index: TextIndex, 
+  options: Options = DEFAULT_SEARCH_OPTIONS, 
+  size = 10
+): SearchResult[] => {
+  const optionsValid = checkOptions(options)
+
+  const queryTokens = preprocessText(query, optionsValid)
 
   if (queryTokens.length === 0) return []
 
@@ -137,20 +157,22 @@ export const querySearchIndex = (query: string, index: TextIndex, options: Optio
 
     index.docFreqsByToken[token].forEach(([docId, freq]) => {
       const idf = Math.log(
+        1 + 
         (index.numOfDocs - index.docFreqsByToken[token].length + 0.5) /
         (index.docFreqsByToken[token].length + 0.5)
       )
+
       const score = idf * (
-        (freq * (options.bm25.k1 + 1)) /
-        (freq + options.bm25.k1 * (1 - options.bm25.b + options.bm25.b * (index.docLengths[docId] / index.avgDocLength)))
+        (freq * (optionsValid.bm25.k1 + 1)) /
+        (freq + optionsValid.bm25.k1 * (1 - optionsValid.bm25.b + optionsValid.bm25.b * (index.docLengths[docId] / index.avgDocLength)))
       )
 
       docScores[docId] = (docScores[docId] || 0) + score
     })
   })
 
-  const ranked = Object.entries(docScores).sort((a: any, b: any) => b[1] - a[1])
+  const ranked = Object.entries(docScores).sort((a, b) => b[1] - a[1])
 
-  return ranked.slice(size)
+  return ranked.slice(0, size)
     .map(([docId, score]) => ({ docId: Number(docId), score }) as SearchResult)
 }
