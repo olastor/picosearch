@@ -85,7 +85,7 @@ Returns an object containing data structures to be used for querying and scoring
 **Parameters**
 
 - `query: string` The search query.
-- `index: objecet` The index built by the `buildSearchIndex()` function
+- `index: object` The index built by the `buildSearchIndex()` function
 - `options` The **exactly same** options as provided to the `buildSearchIndex()` function
 - `size: number` The maximum amount of result items to return. Default: `10`
 
