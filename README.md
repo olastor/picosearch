@@ -69,9 +69,9 @@ See [examples/](https://github.com/olastor/picosearch/tree/main/examples).
   - `tokenizer: (s: string) => string[]` A function to split a text into an array of tokens. Default: `(s: string): string[] => s.split(/\s+/g)`
   - `stemmer: (s: string) => string` A function for applying stemming on each token. Default: `null`
   - `lowercase: boolean` Whether or not to lowercase tokens as part of preprocessing. Default: `true`
-  - `stripPunctuation` Whether or not to strip punctuations from tokens. Default: `true`
-  - `stopwords` An array of lowercased words that should be ignored. Default: `[]`
-  - `customTransformation` A function to apply a custom transformation on each token before every other preprocessing step. Default: `null`
+  - `stripPunctuation: boolean` Whether or not to strip punctuations from tokens. Default: `true`
+  - `stopwords: string[]` An array of lowercased words that should be ignored. Default: `[]`
+  - `customTransformation: (s: string) => string` A function to apply a custom transformation on each token before every other preprocessing step. Default: `null`
   - `bm25` Object for specifying custom BM25 parameters
     - `b` The `b` value. Default: `1.2`
     - `k1` The `k1` value. Default: `0.75`
