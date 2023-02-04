@@ -1,9 +1,14 @@
-import { buildSearchIndex, querySearchIndex, DEFAULT_SEARCH_OPTIONS } from '../src/index'
+import { 
+  buildSearchIndex, 
+  querySearchIndex, 
+  highlightQueryInDocs,
+  DEFAULT_SEARCH_OPTIONS 
+} from '../src/index'
 
 // examples copied from: https://www.elastic.co/de/blog/practical-bm25-part-2-the-bm25-algorithm-and-its-variables
 const testDocs1 = ['Shane', 'Shane C', 'Shane P Connelly', 'Shane Connelly', 'Shane Shane Connelly Connelly', 'Shane Shane Shane Connelly Connelly Connelly']
 
-describe('TinySearch', () => {
+describe('Main', () => {
   describe('Options', () => {
     test('tokenizer should work', () => {
       const options = {
@@ -222,5 +227,21 @@ describe('TinySearch', () => {
         { docId: 1, score: 0.10261103836669179 }
       ])
     });
+  })
+
+  describe('Highlighting', () => {
+    test('highlighting should work', () => {
+      const stemmer = (s: string) => s === 'dogs' ? 'dog' : s
+      const options = {
+        ...DEFAULT_SEARCH_OPTIONS,
+        stemmer
+      }
+
+      const doc = ' The dog   is      playing  with other dogs  .   '
+      const docExpected = ' The <em>dog</em>   is      playing  with other <em>dogs</em>  .   '
+
+      expect(highlightQueryInDocs('dog', [doc], options)).toEqual([docExpected])
+      
+    })
   })
 });

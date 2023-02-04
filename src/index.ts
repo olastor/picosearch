@@ -1,96 +1,17 @@
-export interface SearchOptions {
-  tokenizer: (s: string) => string[];
-  stemmer: null | ((s: string) => string);
-  lowercase: boolean;
-  stripPunctuation: boolean;
-  customTransformation: null| ((s: string) => string);
-  stopwords: string[];
-  bm25: {
-    k1: number
-    b: number
-  }
-}
+import { 
+  SearchOptions, 
+  SearchResult,
+  TextIndex 
+} from './interfaces'
 
-export interface TextIndex {
-  numOfDocs: number;
-  docFreqsByToken: { [key: string]: [number, number][] };
-  docLengths: { [key: string]: number };
-  avgDocLength: number;
-}
-
-export interface SearchResult {
-  docId: number;
-  score: number;
-}
-
-export const DEFAULT_SEARCH_OPTIONS: SearchOptions = {
-  tokenizer: (s: string): string[] => s.split(/\s+/g),
-  stemmer: null,
-  customTransformation: null,
-  lowercase: true,
-  stripPunctuation: true,
-  stopwords: [],
-  bm25: {
-    k1: 1.2,
-    b: 0.75
-  }
-}
-
-// eslint-disable-next-line no-useless-escape
-const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
-const stripPunctuation = (s: string): string => s.replace(REGEXP_PATTERN_PUNCT, '')
-
-const checkSearchOptions = (options: SearchOptions): SearchOptions => {
-  const optionsValid = {
-    ...DEFAULT_SEARCH_OPTIONS,
-    ...options
-  } 
-
-  return optionsValid
-}
-
-const preprocessText = (text: string, options: SearchOptions): string[] => {
-  const tokens = options.tokenizer(text)
-  const result: string[] = [] 
-
-  for (const token of tokens) {
-    let newToken = token.trim()
-
-    if (!newToken) continue;
-
-    if (options.customTransformation) {
-      newToken = options.customTransformation(newToken)
-    }
-
-    if (options.stripPunctuation) {
-      newToken = stripPunctuation(newToken)
-    }
-
-    if (!newToken) continue;
-
-    if (
-      options.stopwords && 
-      options.stopwords.length > 0 && 
-      options.stopwords.includes(newToken.toLowerCase())
-    ) {
-      continue
-    }
-
-    if (options.lowercase) {
-      newToken = newToken.toLowerCase()
-    }
-
-    if (options.stemmer) {
-      newToken = options.stemmer(newToken)
-    }
-    
-    if (newToken) {
-      result.push(newToken) 
-    }
-  }
-
-  return result
-}
+import { DEFAULT_SEARCH_OPTIONS } from './constants'
+import { 
+  checkSearchOptions, 
+  preprocessText, 
+  preprocessToken,
+  findRemovedPartsByTokenizer,
+  reconstructTokenizedDoc
+} from './utils'
 
 export const buildSearchIndex = (
   docs: string[], 
@@ -176,3 +97,30 @@ export const querySearchIndex = (
   return ranked.slice(0, size)
     .map(([docId, score]) => ({ docId: Number(docId), score }) as SearchResult)
 }
+
+
+export const highlightQueryInDocs = (
+  query: string, 
+  docs: string[],
+  options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
+  tagBefore = '<em>',
+  tagAfter = '</em>'
+) => {
+  const optionsValid = checkSearchOptions(options)
+
+  const queryTokens = preprocessText(query, optionsValid)
+  const highlightedDocs = docs.map(doc => {
+    const docTokensRaw = options.tokenizer(doc)
+    const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
+    const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(preprocessToken(token, optionsValid))
+      ? `${tagBefore}${token}${tagAfter}`
+      : token
+    )
+    return reconstructTokenizedDoc(docTokensHighlighted, tokenizerGaps)
+  })
+
+
+  return highlightedDocs
+}
+
+export { DEFAULT_SEARCH_OPTIONS }
