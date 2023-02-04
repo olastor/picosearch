@@ -1,6 +1,6 @@
-# tiny-search
+# picosearch
 
-Tiny, customizable module for creating basic full-text search indices and queries using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm (used by Lucene, Elasticsearch etc.). The focus is on providing a simple and reusable implementation and configuration with no dependencies.
+Minimalistic, customizable module for creating basic full-text search indices and queries using the [BM25](https://en.wikipedia.org/wiki/Okapi_BM25) algorithm (used by Lucene, Elasticsearch etc.). The focus is on providing a simple and reusable implementation and configuration with no dependencies.
 
 - Stemmers and stopwords are **not** included and must be provided as config values.
 - JSON serializable indices
@@ -10,13 +10,13 @@ Tiny, customizable module for creating basic full-text search indices and querie
 ## Installation
 
 ```bash
-yarn add tiny-search
+yarn add picosearch
 ```
 
 or 
 
 ```bash
-npm install tiny-search
+npm install picosearch
 ```
 
 ## Quickstart
@@ -24,7 +24,7 @@ npm install tiny-search
 The following shows a basic example of how to create a new search index using an array of sentences and query it. For stemming, the porter stemmer and english stopwords are installed from existing packages, and provided to the options object.
 
 ```javascript
-const { buildSearchIndex, querySearchIndex } = require('tiny-search')
+const { buildSearchIndex, querySearchIndex } = require('picosearch')
 const porterStemmer = require('porter-stemmer')
 const { eng } = require('stopword')
 
@@ -56,7 +56,7 @@ console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
 ```
 
 
-See [examples/](https://github.com/olastor/tiny-search/tree/main/examples).
+See [examples/](https://github.com/olastor/picosearch/tree/main/examples).
 
 ## API
 

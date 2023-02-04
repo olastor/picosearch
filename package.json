@@ -1,5 +1,5 @@
 {
-  "name": "tiny-search",
+  "name": "picosearch",
   "version": "0.1.0",
   "description": "Tiny, customizable module for creating basic full-text search indices and queries using the BM25 algorithm.",
   "main": "dist/index.js",
@@ -23,12 +23,12 @@
     "ts-jest": "^29.0.5",
     "typescript": "^4.9.5"
   },
-  "homepage": "https://github.com/olastor/tiny-search#readme",
+  "homepage": "https://github.com/olastor/picosearch#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/olastor/tiny-search"
+    "url": "https://github.com/olastor/picosearch"
   },
   "bugs": {
-    "url": "https://github.com/olastor/tiny-search/issues"
+    "url": "https://github.com/olastor/picosearch/issues"
   }
 }
