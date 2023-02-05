@@ -13,7 +13,7 @@ jobs:
     needs: build-docs
     steps:
       - run: |
-          cat package.json | grep "\"version\": \"${GITHUB_REF##*/}\""
+          cat package.json | grep "\"version\": \"${GITHUB_REF##*/v}\""
 
   deploy-docs:
     environment:
