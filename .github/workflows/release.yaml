@@ -47,7 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-docs
     steps:
-      - run: |
+      - uses: actions/checkout@v3
+      - shell: bash
+        run: |
           cat package.json | grep "\"version\": \"${GITHUB_REF##*/v}\""
 
   deploy-docs:
