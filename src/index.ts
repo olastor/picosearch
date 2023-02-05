@@ -1,7 +1,7 @@
 import { 
   SearchOptions, 
   SearchResult,
-  TextIndex 
+  SearchIndex 
 } from './interfaces'
 
 import { DEFAULT_SEARCH_OPTIONS } from './constants'
@@ -13,13 +13,24 @@ import {
   reconstructTokenizedDoc
 } from './utils'
 
+export * from './constants'
+export * from './interfaces'
+
+/**
+ * Function for building a search index that later can be used for querying.
+ *
+ * @param docs An array of documents / texts.
+ * @param options The search options to use for pre-processing.
+ *
+ * @returns A JSON-serializable object containing the search index to be used for subsequent queries. The raw documents are **not included** in the index and the provided `docs` array must be present without modificaton at query time. Depending on the size of the text corpus, the size of the index can very.
+ */
 export const buildSearchIndex = (
   docs: string[], 
   options: SearchOptions = DEFAULT_SEARCH_OPTIONS
-): TextIndex => {
+): SearchIndex => {
   const optionsValid = checkSearchOptions(options)
 
-  const newIndex: TextIndex = {
+  const newIndex: SearchIndex = {
     numOfDocs: docs.length,
     docFreqsByToken: {},
     docLengths: {},
@@ -58,11 +69,23 @@ export const buildSearchIndex = (
   return newIndex
 }
 
+/**
+ * Function querying an existing search index.
+ *
+ * @param query A word or sequence of words for searching the text corpus.
+ * @param index The search index build previously.
+ * @param options The **exactly same** options as provided to the function for creating the index.
+ * @param size The maximum amount of result items to return.
+ * @param offset The offset for returning search items, e.g., for using pagination.
+ *
+ * @returns Returns an array of matches sorted by scores descending (starting with the most relevant item).
+ */
 export const querySearchIndex = (
   query: string, 
-  index: TextIndex, 
+  index: SearchIndex, 
   options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
-  size = 10
+  size = 10,
+  offset = 0
 ): SearchResult[] => {
   const optionsValid = checkSearchOptions(options)
 
@@ -94,11 +117,22 @@ export const querySearchIndex = (
 
   const ranked = Object.entries(docScores).sort((a, b) => b[1] - a[1])
 
-  return ranked.slice(0, size)
+  return ranked.slice(offset, size)
     .map(([docId, score]) => ({ docId: Number(docId), score }) as SearchResult)
 }
 
 
+/**
+ * Function highlighting matching words in documents for a query.
+ *
+ * @param query A word or sequence of words for searching the text corpus.
+ * @param docs A set of documents to apply the highlighting to.
+ * @param options The search options as provided to the function for querying.
+ * @param tagBefore The opening tag for marking highlighted words.
+ * @param tagAfter The closing tag for marking highlighted words.
+ *
+ * @returns The documents array with words highlighted that match the query.
+ */
 export const highlightQueryInDocs = (
   query: string, 
   docs: string[],
@@ -110,7 +144,7 @@ export const highlightQueryInDocs = (
 
   const queryTokens = preprocessText(query, optionsValid)
   const highlightedDocs = docs.map(doc => {
-    const docTokensRaw = options.tokenizer(doc)
+    const docTokensRaw = optionsValid.tokenizer(doc)
     const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
     const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(preprocessToken(token, optionsValid))
       ? `${tagBefore}${token}${tagAfter}`

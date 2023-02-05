@@ -11,7 +11,7 @@
     "build": "tsc",
     "test": "jest",
     "lint": "eslint src/",
-    "docs": "typedoc --hideGenerator src/index.ts"
+    "docs": "typedoc"
   },
   "author": "Sebastian Kussl",
   "license": "MIT",

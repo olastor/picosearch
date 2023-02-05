@@ -1,5 +1,8 @@
 import { SearchOptions } from './interfaces'
 
+/** 
+  * The default search options. See interface for documentation of default values.
+  */
 export const DEFAULT_SEARCH_OPTIONS: SearchOptions = {
   tokenizer: (s: string): string[] => s.split(/\s+/g),
   stemmer: null,
