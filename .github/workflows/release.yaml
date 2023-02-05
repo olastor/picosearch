@@ -27,9 +27,21 @@ jobs:
       - run: npm test
       - run: npm run lint
 
-  build-docs:
+  check-version:
     runs-on: ubuntu-latest
     needs: test
+    steps:
+      - uses: actions/checkout@v3
+      - shell: bash
+        run: |
+          cat package.json | grep "\"version\": \"${GITHUB_REF##*/v}\""
+
+  deploy-docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: [ check-version, build-docs ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js 18.x
@@ -42,23 +54,6 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           path: docs/
-
-  check-version:
-    runs-on: ubuntu-latest
-    needs: build-docs
-    steps:
-      - uses: actions/checkout@v3
-      - shell: bash
-        run: |
-          cat package.json | grep "\"version\": \"${GITHUB_REF##*/v}\""
-
-  deploy-docs:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: check-version
-    runs-on: ubuntu-latest
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
