@@ -24,7 +24,7 @@ jobs:
       - run: npm test
       - run: npm run lint
 
-  docs:
+  build-docs:
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -35,18 +35,19 @@ jobs:
           node-version: 18.x
       - run: npm ci
       - run: npm run docs
-      - shell: bash
-        run: |
-          tar \
-            --dereference --hard-dereference \
-            --directory docs \
-            -cvf docs.tar \
-            --exclude=.git \
-            --exclude=.github \
-            .
-      - name: Upload artifact
-        uses: actions/upload-artifact@main
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v1
         with:
-          name: github-pages
-          path: docs.tar
-          retention-days: 30
+          path: docs/
+
+  deploy-docs:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build-docs
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
