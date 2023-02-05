@@ -8,11 +8,18 @@ permissions:
   id-token: write
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    needs: build-docs
+    steps:
+      - run: |
+          cat package.json | grep "\"version\": \"${GITHUB_REF##*/}\""
+
   deploy-docs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build-docs
+    needs: check-version
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
