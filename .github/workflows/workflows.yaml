@@ -35,14 +35,15 @@ jobs:
           node-version: 18.x
       - run: npm ci
       - run: npm run docs
-      - run: |
-        tar \
-          --dereference --hard-dereference \
-          --directory docs \
-          -cvf docs.tar \
-          --exclude=.git \
-          --exclude=.github \
-          .
+      - shell: bash
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory docs \
+            -cvf docs.tar \
+            --exclude=.git \
+            --exclude=.github \
+            .
       - name: Upload artifact
         uses: actions/upload-artifact@main
         with:
