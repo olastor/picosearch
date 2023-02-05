@@ -58,42 +58,8 @@ console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
 
 See [examples/](https://github.com/olastor/picosearch/tree/main/examples).
 
-## API
+## API Docs
 
-### `buildSearchIndex(docs, options)`
-
-**Parameters**
-
-- `docs: string[]` An array of documents / texts.
-- `options`
-  - `tokenizer: (s: string) => string[]` A function to split a text into an array of tokens. Default: `(s: string): string[] => s.split(/\s+/g)`
-  - `stemmer: (s: string) => string` A function for applying stemming on each token. Default: `null`
-  - `lowercase: boolean` Whether or not to lowercase tokens as part of preprocessing. Default: `true`
-  - `stripPunctuation: boolean` Whether or not to strip punctuations from tokens. Default: `true`
-  - `stopwords: string[]` An array of lowercased words that should be ignored. Default: `[]`
-  - `customTransformation: (s: string) => string` A function to apply a custom transformation on each token before every other preprocessing step. Default: `null`
-  - `bm25` Object for specifying custom BM25 parameters
-    - `b` The `b` value. Default: `1.2`
-    - `k1` The `k1` value. Default: `0.75`
-
-**Return Value**
-
-Returns an object containing data structures to be used for querying and scoring. The raw documents are **not included** and the provided `docs` array must be present without modificaton at query time. Depending on the size of the text corpus, the size of the index can very.
-
-### `querySearchIndex(query, index, options, size)`
-
-**Parameters**
-
-- `query: string` The search query.
-- `index: object` The index built by the `buildSearchIndex()` function
-- `options` The **exactly same** options as provided to the `buildSearchIndex()` function
-- `size: number` The maximum amount of result items to return. Default: `10`
-
-**Return Value**
-
-Returns an array of matches sorted by scores descending (starting with the most relevant item), each having these fields:
-
-- `docId`: The ID of the document, i.e., the index of the text in the `docs` array.
-- `score`: The calculated BM25 relevancy score.
+see [https://olastor.github.io/picosearch/](https://olastor.github.io/picosearch/)
 
 
