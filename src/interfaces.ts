@@ -2,7 +2,7 @@
   * Options for defining preprocessing steps and parameters for scoring
   * that should be provided both at index and query time.
   */
-export interface SearchOptions {
+export interface TextAnalyzer {
   /** 
     * A function to split a text into an array of tokens. 
     * @defaultValue `(s: string): string[] => s.split(/\s+/g)`
@@ -38,7 +38,25 @@ export interface SearchOptions {
     * @defaultValue []
     */
   stopwords: string[];
+}
 
+export interface QueryOptions {
+  queryFields?: string[] | {
+    weight?: number,
+    b?: number,
+    highlight?: boolean
+  }[];
+
+  filter?: {
+    [key: string]: any
+  };
+
+  size: number;
+
+  offset: number;
+
+  getDocument?: (documentId: string) => string | Promise<string>;
+  
   /** Object for specifying custom BM25 parameters. */
   bm25: {
     /** 
@@ -60,10 +78,7 @@ export interface SearchOptions {
   * For normal use cases, the semantics of the fields of this data structure do not matter
   * to the user.
   */
-export interface SearchIndex {
-  /** The total number of documents. */
-  numOfDocs: number;
-
+export type TextFieldIndex = {
   /** 
     * A mapping of tokens to an array, in which the first value 
     * is the document ID this token is present and the second value
@@ -74,8 +89,32 @@ export interface SearchIndex {
   /** A mapping for retrieving the length, i.e. the count of words, of a document by its ID. */
   docLengths: { [key: string]: number };
 
-  /** The average length of all documents. */
-  avgDocLength: number;
+  /** The sum of lengths of all documents. */
+  totalDocLengths: number;
+
+  /** The count of documents. */
+  docCount: number;
+}
+
+// [num, [docId2, docId2]]
+export type NumberFieldIndex = [number, number[]][]
+export type KeywordFieldIndex = { [keyword: string]: number[] };
+export type MappingType = 'text' | 'keyword' | 'number' | 'date'
+
+export interface SearchIndexMapping {
+ [field: string]: MappingType 
+}
+
+export interface SearchIndex {
+  length: number;
+  mappings: SearchIndexMapping; 
+  lastId: number;
+  ids: {
+    [key: string]: number
+  }
+  fields: {
+    [key: string]: TextFieldIndex | NumberFieldIndex | KeywordFieldIndex
+  }
 }
 
 /** Data structure for a search result. */
@@ -88,4 +127,10 @@ export interface SearchResult {
     * Scores generally cannot be compared across different queries. 
     */
   score: number;
+}
+
+export interface IndexField {
+  indexDocument(fieldIndex: any, document: { [key: string]: unknown }, documentFieldValue: any): { [key: string]: any };
+  removeDocument(fieldIndex: any, documentId: number): void;
+  updateDocument(fieldIndex: any, document: { [key: string]: unknown }): void;
 }
