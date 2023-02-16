@@ -1,20 +1,28 @@
 import { 
-  SearchOptions, 
   SearchResult,
-  SearchIndex 
+  SearchIndex,
+  SearchIndexMapping,
+  TextFieldIndex,
+  NumberFieldIndex,
+  KeywordFieldIndex,
+  TextAnalyzer,
+  QueryOptions
 } from './interfaces'
 
-import { DEFAULT_SEARCH_OPTIONS } from './constants'
-import { 
-  checkSearchOptions, 
-  preprocessText, 
-  preprocessToken,
-  findRemovedPartsByTokenizer,
-  reconstructTokenizedDoc
-} from './utils'
+import { DEFAULT_ANALYZER, DEFAULT_QUERY_OPTIONS } from './constants'
+
+import { scoreBM25F } from './utils/bm25f'
 
 export * from './constants'
 export * from './interfaces'
+
+import {KeywordField} from './fields/keyword'
+import {NumberField} from './fields/number'
+import {TextField} from './fields/text'
+import { evaluateFilter } from './utils/filter'
+import { preprocessText } from './utils/preprocessing'
+
+
 
 /**
  * Function for building a search index that later can be used for querying.
@@ -24,49 +32,100 @@ export * from './interfaces'
  *
  * @returns A JSON-serializable object containing the search index to be used for subsequent queries. The raw documents are **not included** in the index and the provided `docs` array must be present without modificaton at query time. Depending on the size of the text corpus, the size of the index can very.
  */
-export const buildSearchIndex = (
-  docs: string[], 
-  options: SearchOptions = DEFAULT_SEARCH_OPTIONS
-): SearchIndex => {
-  const optionsValid = checkSearchOptions(options)
-
-  const newIndex: SearchIndex = {
-    numOfDocs: docs.length,
-    docFreqsByToken: {},
-    docLengths: {},
-    avgDocLength: 0
+export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
+  const searchIndex: SearchIndex = {
+    length: 0,
+    mappings,
+    fields: {},
+    ids: {},
+    lastId: -1
   }
 
-  // build a mapping, listing occurrences of a token in documents, grouped by the token
-  const docsByToken: { [key: string]: number[] } = {}
-  docs.forEach((text: string, i: number) => {
-    const tokens = preprocessText(text, optionsValid)
 
-    newIndex.docLengths[i.toString()] = tokens.length
-    newIndex.avgDocLength += tokens.length
+  return searchIndex
+}
 
-    tokens.forEach(token => {
-      if (typeof docsByToken[token] === 'undefined') {
-        docsByToken[token] = []
+export const indexDocument = (
+  searchIndex: SearchIndex,
+  doc: { [key: string]: any },
+  analyzer: TextAnalyzer = DEFAULT_ANALYZER
+) => {
+  analyzer = {
+    ...DEFAULT_ANALYZER,
+    ...analyzer
+  }
+
+  if (!doc._id && doc._id !== 0) {
+    throw new Error('Missing id')
+  }
+
+  if (typeof searchIndex.ids[doc._id] !== 'undefined') {
+    throw new Error('Duplicate ID')
+  }
+
+  // const analyzer = checkSearchOptions(analyzer)
+
+  // TODO: handle integer passing MAX_SAFE_INTEGER
+  const numericId = searchIndex.lastId + 1
+
+  searchIndex.ids[doc._id] = numericId
+  searchIndex.lastId = numericId
+  searchIndex.length += 1
+
+  for (const [field, value] of Object.entries(doc)) {
+    if (field === '_id') continue
+
+    const type = searchIndex.mappings[field]      
+
+    if (type === 'text') {
+      if (!searchIndex.fields[field]) {
+        searchIndex.fields[field] = TextField.initialize()
       }
 
-      docsByToken[token].push(i)
-    })
-  })
+      TextField.indexDocument(
+        searchIndex.fields[field] as TextFieldIndex,
+        numericId,
+        value,
+        analyzer
+      )
+    } else if (type === 'keyword') {
+      if (!searchIndex.fields[field]) {
+        searchIndex.fields[field] = KeywordField.initialize()
+      }
 
-  newIndex.avgDocLength /= docs.length
+      KeywordField.indexDocument(
+        searchIndex.fields[field] as KeywordFieldIndex,
+        numericId,
+        value
+      )
+    } else if (type === 'number') {
+      if (!searchIndex.fields[field]) {
+        searchIndex.fields[field] = NumberField.initialize()
+      }
 
-  // transform the mapping to include the frequencies of documents
-  Object.entries(docsByToken).forEach(([token, docIds]) => {
-    const freqMap: { [key: string]: number } = {};
-    docIds.forEach((docId) => {
-      freqMap[docId] = (freqMap[docId] || 0) + 1
-    })
+      NumberField.indexDocument(
+        searchIndex.fields[field] as NumberFieldIndex,
+        numericId,
+        value
+      )
+    } else {
+      throw new Error('invalid field')
+    }
+  }
+}
 
-    newIndex.docFreqsByToken[token] = Object.entries(freqMap).map(([docId, freq]) => [Number(docId), freq])
-  })
-  
-  return newIndex
+export const removeDocument = (
+  searchIndex: SearchIndex,
+  doc: { [key: string]: any }
+) => {
+  const numericId = searchIndex.ids[doc._id]
+  if (numericId === undefined) {
+    throw new Error('Document does not exist.')
+  }
+
+  delete searchIndex.ids[doc._id]
+  searchIndex.lastId = numericId
+  searchIndex.length -= 1
 }
 
 /**
@@ -80,81 +139,82 @@ export const buildSearchIndex = (
  *
  * @returns Returns an array of matches sorted by scores descending (starting with the most relevant item).
  */
-export const querySearchIndex = (
-  query: string, 
-  index: SearchIndex, 
-  options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
-  size = 10,
-  offset = 0
-): SearchResult[] => {
-  const optionsValid = checkSearchOptions(options)
+export const searchIndex = (
+  query: string,
+  index: SearchIndex,
+  optionsP: Partial<QueryOptions>,
+  analyzerP: Partial<TextAnalyzer> = DEFAULT_ANALYZER
+): any => {
+  // const analyzer = checkSearchOptions(options)
+  const analyzer: TextAnalyzer = {
+    ...DEFAULT_ANALYZER,
+    ...analyzerP
+  }
 
-  const queryTokens = preprocessText(query, optionsValid)
+  const options: QueryOptions = {
+    ...DEFAULT_QUERY_OPTIONS,
+    ...optionsP
+  }
 
-  if (queryTokens.length === 0) return []
+  let filteredDocumentIds: number[]
+  if (options.filter) {
+    filteredDocumentIds = evaluateFilter(index, options.filter)
+  }
 
-  const docScores: { [doc: string]: number } = {}
-  queryTokens.forEach(token => {
-    if (!index.docFreqsByToken[token]) {
-      return
+  if (query) {
+    let textFields: string[] = []
+    let b: number[] = []
+    let weights: number[] = []
+
+    if (Array.isArray(options.queryFields) && options.queryFields.length > 0) {
+      (options.queryFields as string[]).forEach((field => {
+        if (!index.mappings[field]) {
+          throw new Error('Field does not exist.')
+        }
+
+        textFields.push(field)
+        b.push(options.bm25.b)
+        weights.push(1)
+      }))
+    } else if (typeof options.queryFields === 'object') {
+      Object.entries(options.queryFields).forEach(([field, fieldOpts]) => {
+        if (typeof fieldOpts['b'] === 'number') {
+          b.push(fieldOpts['b'])
+        } else {
+          b.push(options.bm25.b)
+        }
+
+        if (typeof fieldOpts['weight'] === 'number') {
+          weights.push(fieldOpts['weight'])
+        } else {
+          weights.push(1)
+        }
+
+        // TODO: highlight
+      })
+    } else {
+      textFields = Object.entries(index.mappings)
+        .filter(([field, type]) => type === 'text')
+        .map(([field]) => field)
+      b = textFields.map(() => options.bm25.b)
+      weights = textFields.map(() => 1)
     }
 
-    index.docFreqsByToken[token].forEach(([docId, freq]) => {
-      const idf = Math.log(
-        1 + 
-        (index.numOfDocs - index.docFreqsByToken[token].length + 0.5) /
-        (index.docFreqsByToken[token].length + 0.5)
-      )
 
-      const score = idf * (
-        (freq * (optionsValid.bm25.k1 + 1)) /
-        (freq + optionsValid.bm25.k1 * (1 - optionsValid.bm25.b + optionsValid.bm25.b * (index.docLengths[docId] / index.avgDocLength)))
-      )
+    const queryTokens = preprocessText(query as any, analyzer)
+    if (queryTokens.length === 0) return []
 
-      docScores[docId] = (docScores[docId] || 0) + score
-    })
-  })
-
-  const ranked = Object.entries(docScores).sort((a, b) => b[1] - a[1])
-
-  return ranked.slice(offset, size)
-    .map(([docId, score]) => ({ docId: Number(docId), score }) as SearchResult)
-}
-
-
-/**
- * Function highlighting matching words in documents for a query.
- *
- * @param query A word or sequence of words for searching the text corpus.
- * @param docs A set of documents to apply the highlighting to.
- * @param options The search options as provided to the function for querying.
- * @param tagBefore The opening tag for marking highlighted words.
- * @param tagAfter The closing tag for marking highlighted words.
- *
- * @returns The documents array with words highlighted that match the query.
- */
-export const highlightQueryInDocs = (
-  query: string, 
-  docs: string[],
-  options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
-  tagBefore = '<em>',
-  tagAfter = '</em>'
-) => {
-  const optionsValid = checkSearchOptions(options)
-
-  const queryTokens = preprocessText(query, optionsValid)
-  const highlightedDocs = docs.map(doc => {
-    const docTokensRaw = optionsValid.tokenizer(doc)
-    const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
-    const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(preprocessToken(token, optionsValid))
-      ? `${tagBefore}${token}${tagAfter}`
-      : token
+    const ranked = scoreBM25F(
+      queryTokens,
+      index,
+      textFields,
+      weights,
+      b,
+      options.bm25.k1,
+      null
     )
-    return reconstructTokenizedDoc(docTokensHighlighted, tokenizerGaps)
-  })
 
-
-  return highlightedDocs
+    return ranked.slice(options.offset, options.size)
+      .map(([docId, score]) => ({ docId: Number(docId), score }) as SearchResult)
+  }  
 }
-
-export { DEFAULT_SEARCH_OPTIONS }

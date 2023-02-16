@@ -1,4 +1,4 @@
-const { buildSearchIndex, querySearchIndex } = require('../lib')
+const { createIndex, indexDocument, searchIndex } = require('../dist')
 const porterStemmer = require('porter-stemmer')
 const { eng } = require('stopword')
 
@@ -11,17 +11,25 @@ sentences = [
   'Two women are biking.',
 ]
 
-const searchOptions = {
+const analyzer = {
   stemmer: porterStemmer.stemmer,
   lowercase: true,
   stripPunctuation: true,
   stopwords: eng
 }
 
-const searchQuery = 'who bought breads?'
-console.log(`Searching for "${searchQuery}"`)
 
-const searchIndex = buildSearchIndex(sentences, searchOptions)
-const searchResults = querySearchIndex(searchQuery, searchIndex, searchOptions)
+const index = createIndex({
+  title: 'text',
+  body: 'text'
+})
 
-console.log(searchResults.map(({ docId, score }) => [sentences[docId], score]))
+indexDocument(index, { _id: 'doc1', title: 'Milk', body: 'A man is drinking milk.' }, analyzer)
+indexDocument(index, { _id: 'doc2',title: 'Bread', body: 'A man is eating bread.' }, analyzer)
+indexDocument(index, { _id: 'doc3', title: 'Butter', body: 'A man is eating bread and butter.' }, analyzer)
+
+console.log(index)
+console.log(searchIndex('Who is eating bread?', index, {
+  offset: 0,
+  size: 10
+}, analyzer))
