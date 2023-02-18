@@ -25,11 +25,13 @@ export default class TextField  {
     documentFieldValue: string,
     analyzer: TextAnalyzer
   ): void {
-    if (typeof documentFieldValue !== 'string') {
-      throw new Error('Text must be a string!')
-    }
+    // if (typeof documentFieldValue !== 'string') {
+    //   throw new Error('Text must be a string!')
+    // }
 
-    const tokens = preprocessText(documentFieldValue, analyzer)
+    const tokens = Array.isArray(documentFieldValue)
+      ? documentFieldValue.flatMap(text => preprocessText(text, analyzer))
+      : preprocessText(documentFieldValue, analyzer)
 
     const tokenFreqs: { [key: string]: number } = {}
     tokens.forEach((token: string) => {

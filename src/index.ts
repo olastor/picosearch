@@ -261,7 +261,7 @@ export const searchIndex = async (
 
     for (const [docId, _score] of ranked.slice(options.offset, options.size)) {
       let _source: any = null
-      let highlight: { [key: string]: string } = {}
+      let highlight: { [key: string]: string | string[] } = {}
       if (options.getDocument) {
         _source = await options.getDocument(index.originalIds[docId])
       }
@@ -273,8 +273,7 @@ export const searchIndex = async (
       }
 
       if (_source && highlightedFields.length > 0) {
-        highlightedFields.forEach(field => {
-          const text = _.get(_source, field)
+        const doHighlight = (text: string) => {
           const tokensRaw = analyzer.tokenizer(text)
           const tokenizerGaps = findRemovedPartsByTokenizer(text, tokensRaw)
           const tokensHighlighted = tokensRaw.map(token => 
@@ -282,10 +281,15 @@ export const searchIndex = async (
               ? `${options.highlightTags.open}${token}${options.highlightTags.close}`
               : token)
           
-          highlight[field] = reconstructTokenizedDoc(
+          return reconstructTokenizedDoc(
             tokensHighlighted, 
             tokenizerGaps
           )
+        }
+
+        highlightedFields.forEach(field => {
+          const text = _.get(_source, field)
+          highlight[field] = Array.isArray(text) ? text.map(doHighlight) : doHighlight(text)
         })
 
         hit.highlight = highlight
