@@ -313,6 +313,13 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@fast-check/jest@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@fast-check/jest/-/jest-1.6.0.tgz#247cac1810c7906574b784f723ed14150669d506"
+  integrity sha512-a5GEOQrVhLAWEiouiCBSt45EkyVgj59ePTHX8nsjSMxZyBMhasUgg5O60Q2ItR5P/6xUbGBBwoXVkg5mO501hw==
+  dependencies:
+    fast-check "^3.0.0"
+
 "@humanwhocodes/config-array@^0.11.8":
   version "0.11.8"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.8.tgz#03595ac2075a4dc0f191cc2131de14fbd7d410b9"
@@ -1202,6 +1209,11 @@ doctrine@^3.0.0:
   dependencies:
     esutils "^2.0.2"
 
+edit-distance@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/edit-distance/-/edit-distance-1.0.5.tgz#3eaad0417a9058736e48e090b268600080f7b4f4"
+  integrity sha512-kgJKxFAxa6PlpfVAiCfj8uCUyhs6PZWZDxW2EaX7ra1+WmLkoVjG9Z1BHfPDfhrJvWaOSm9qf/CmxqH44EVlcQ==
+
 electron-to-chromium@^1.4.284:
   version "1.4.295"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.295.tgz#911d5df67542bf7554336142eb302c5ec90bba66"
@@ -1396,7 +1408,7 @@ expect@^29.0.0, expect@^29.4.2:
     jest-message-util "^29.4.2"
     jest-util "^29.4.2"
 
-fast-check@^3.6.3:
+fast-check@^3.0.0, fast-check@^3.6.3:
   version "3.6.3"
   resolved "https://registry.yarnpkg.com/fast-check/-/fast-check-3.6.3.tgz#9adb8161390c4a6a84c0f3ed333b15e1c7292f8a"
   integrity sha512-5+ovrjQLUa+F9RbRcW7A++K+olKy2mNgYNfFmXSzQOAQ/Fuit12F1UI8z5Bic9YgRkUAQqXSkFUAAs7xohbvvg==

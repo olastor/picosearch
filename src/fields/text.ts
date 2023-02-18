@@ -4,11 +4,15 @@ import {
 } from '../interfaces'
 
 import { preprocessText } from '../utils/preprocessing'
+import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/trie'
 
-export class TextField  {
+export default class TextField  {
   public static initialize() {
     return  {
-      docFreqsByToken: {},
+      docFreqsByToken: {
+        children: {},
+        items: []
+      },
       docLengths: {},
       totalDocLengths: 0,
       docCount: 0
@@ -33,11 +37,7 @@ export class TextField  {
     })
     
     Object.entries(tokenFreqs).forEach(([token, freq]) => {
-      if (typeof fieldIndex.docFreqsByToken[token] === 'undefined') {
-        fieldIndex.docFreqsByToken[token] = []
-      }
-
-      fieldIndex.docFreqsByToken[token].push([documentId, freq])
+      trieInsert<[number, number]>(fieldIndex.docFreqsByToken, [documentId, freq], token)
     })
 
     fieldIndex.docLengths[documentId.toString()] = tokens.length
@@ -50,16 +50,17 @@ export class TextField  {
     fieldIndex: TextFieldIndex,
     documentId: number
   ): void {
-    Object.entries(fieldIndex.docFreqsByToken).forEach(([token, values]) => {
-      const index = values.findIndex(item => item[0] === documentId)
-      if (index > -1) {
-        values.splice(index, 1)
-      }
-    })
+    // TODO!
+    // Object.entries(fieldIndex.docFreqsByToken).forEach(([token, values]) => {
+    //   const index = values.findIndex(item => item[0] === documentId)
+    //   if (index > -1) {
+    //     values.splice(index, 1)
+    //   }
+    // })
 
-    fieldIndex.totalDocLengths -= fieldIndex.docLengths[documentId.toString()]
-    delete fieldIndex.docLengths[documentId.toString()]
-    fieldIndex.docCount -= 1
+    // fieldIndex.totalDocLengths -= fieldIndex.docLengths[documentId.toString()]
+    // delete fieldIndex.docLengths[documentId.toString()]
+    // fieldIndex.docCount -= 1
   }
 
   // public static updateDocument(
@@ -71,4 +72,5 @@ export class TextField  {
   //   this.removeDocument(fieldIndex, documentId)
   //   this.indexDocument(fieldIndex, options, documentId, documentFieldValue)
   // }
+  //
 }

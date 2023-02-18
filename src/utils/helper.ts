@@ -16,3 +16,6 @@ export const intersection = (arrays: any[][]): any[] => arrays.reduce(function(a
 
 export const union = (arrays: any[][]): any[] => [...new Set(arrays.flatMap(a => a))]
 
+export const randomInt = (max: number = Number.MAX_SAFE_INTEGER) => Math.floor(Math.random() * max)
+
+export const cloneDeep = (obj: any) => JSON.parse(JSON.stringify(obj))

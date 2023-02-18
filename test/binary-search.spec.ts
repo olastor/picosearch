@@ -1,55 +1,48 @@
 import { binarySearch } from '../src/utils/binary-search'
-import fc from 'fast-check'
+import { test, fc } from '@fast-check/jest';
+
+fc.configureGlobal({ verbose: true, numRuns: 5000, endOnFailure: true });
 
 
 describe('Binary Search', () => {
-  test('should throw for empty array', () => {
-    expect(() => binarySearch(4, [])).toThrow(Error)
+  test('should return -1 for empty array', () => {
+    expect(binarySearch(4, [])).toBe(-1)
   })
 
   test('should return 0 for empty array and clostest index', () => {
     expect(binarySearch(4, [], true)).toBe(0)
   })
 
-  test('should find element', () => {
-    fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
-          fc.constant(arr.sort((a, b) => (a - b))),
-          fc.integer({ min: 0, max: arr.length - 1 })
-        )), ([arr, randomIndex]) => {
-          return randomIndex === binarySearch(arr[randomIndex], arr)
-        }),
-        { verbose: true }
-    )
+  test.prop([
+    fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
+      fc.constant(arr.sort((a, b) => (a - b))),
+      fc.integer({ min: 0, max: arr.length - 1 })
+    ))
+  ])('should find element', ([arr, randomIndex]) => {
+    return randomIndex === binarySearch(arr[randomIndex], arr)
   })
 
-  test('should find closest element', () => {
-    fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
-          fc.constant(arr.sort((a, b) => (a - b))),
-          fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
-        )), ([arr, missingValue]) => {
-          let i = arr.findIndex(x => missingValue < x)
-          i = i === -1 ? arr.length : i
-          return binarySearch(missingValue, arr, true) === i
-        }),
-        { verbose: true }
-    )
+  test.prop([
+    fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
+      fc.constant(arr),
+      fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
+    ))
+  ])('should find closest element', ([arr, missingValue]) => {
+    arr.sort((a, b) => (a - b))
+    let i = arr.findIndex(x => missingValue < x)
+    i = i === -1 ? arr.length : i
+    return binarySearch(missingValue, arr, true) === i
   })
 
-  test('should throw if element does not exist', () => {
-    fc.assert(
-      fc.property(
-        fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
-          fc.constant(arr.sort((a, b) => (a - b))),
-          fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
-        )), ([arr, missingValue]) => {
-          expect(() => binarySearch(missingValue, arr)).toThrow(Error)
-          return true
-        }),
-        { verbose: true }
-    )
+  test.prop([
+    fc.uniqueArray(fc.integer(), { minLength: 1 })
+      .chain(arr => fc.tuple(
+        fc.constant(arr),
+        fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
+      ))
+  ])('should return -1 if element does not exist', ([arr, missingValue]) => {
+    arr.sort((a, b) => (a - b))
+    const index = binarySearch(missingValue, arr)
+    return index === -1
   })
 })

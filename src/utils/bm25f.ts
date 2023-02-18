@@ -1,4 +1,5 @@
 import { SearchIndex, TextFieldIndex } from '../interfaces'
+import { trieSearch } from './trie'
 
 // https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/craswell_trec05.pdf
 // https://arxiv.org/pdf/0911.5046.pdf
@@ -14,13 +15,13 @@ export const scoreBM25F = (
   const docScores: { [doc: string]: number } = {}
   let pseudoFreqs: { [doc: string]: number } = {}
 
-  console.log(JSON.stringify(index, null, 2))
   for (const token of queryTokens) {
     for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
       const field = fields[fieldIndex]
       const textIndex = index.fields[field] as TextFieldIndex
 
-      if (!textIndex.docFreqsByToken[token]) {
+      const node = trieSearch(textIndex.docFreqsByToken, token)
+      if (!node) {
         continue
       }
 
@@ -33,7 +34,7 @@ export const scoreBM25F = (
           documentIds.length
         )
 
-      for (const [docId, freq] of textIndex.docFreqsByToken[token]) {
+      for (const [docId, freq] of node.items) {
         if (documentIds && !documentIds.includes(docId)) continue
 
         const normalizedTermFrequency = freq / (

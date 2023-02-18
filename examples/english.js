@@ -23,13 +23,27 @@ const index = createIndex({
   title: 'text',
   body: 'text'
 })
+const docs = [
+  { _id: 'doc1', title: 'Milk', body: 'A man is drinking milk.' },
+  { _id: 'doc2',title: 'Bread', body: 'A man is eating bread.' },
+   { _id: 'doc3', title: 'Butter', body: 'A man is eating bread and butter.' }
+]
+docs.forEach((doc) => indexDocument(index, doc, analyzer))
 
-indexDocument(index, { _id: 'doc1', title: 'Milk', body: 'A man is drinking milk.' }, analyzer)
-indexDocument(index, { _id: 'doc2',title: 'Bread', body: 'A man is eating bread.' }, analyzer)
-indexDocument(index, { _id: 'doc3', title: 'Butter', body: 'A man is eating bread and butter.' }, analyzer)
 
-console.log(index)
-console.log(searchIndex('Who is eating bread?', index, {
+; (async () => {
+console.log(JSON.stringify(await searchIndex(index, 'breet', {
   offset: 0,
-  size: 10
-}, analyzer))
+  size: 10,
+  queryFields: {
+    body: { highlight: true },
+    title: { highlight: true }
+  },
+  fuzziness: {
+    maxDistance: 2,
+    fixedPrefixLength: 3
+  },
+  getDocument: (d) => docs.find(({_id}) => _id === d)
+}, analyzer), null, 2))
+
+})()
