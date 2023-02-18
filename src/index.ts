@@ -169,7 +169,7 @@ export const searchIndex = async (
     ...optionsP
   }
 
-  let filteredDocumentIds: number[]
+  let filteredDocumentIds: number[] | null = null
   if (options.filter) {
     filteredDocumentIds = evaluateFilter(index, options.filter)
   }
@@ -225,10 +225,6 @@ export const searchIndex = async (
       const originalTokens = [...queryTokens]
       for (const token of originalTokens) {
         for (const field of textFields) {
-          console.log(
-            options.fuzziness.maxDistance,
-            options.fuzziness.fixedPrefixLength || 0
-          )
           trieFuzzySearch<[number, number]>(
             (index.fields[field] as TextFieldIndex).docFreqsByToken, 
             token,
@@ -258,7 +254,7 @@ export const searchIndex = async (
       weights,
       b,
       options.bm25.k1,
-      null
+      filteredDocumentIds
     )
 
     const hits = []

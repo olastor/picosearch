@@ -21,12 +21,13 @@ const analyzer = {
 
 const index = createIndex({
   title: 'text',
-  body: 'text'
+  body: 'text',
+  topic: 'keyword'
 })
 const docs = [
-  { _id: 'doc1', title: 'Milk', body: 'A man is drinking milk.' },
-  { _id: 'doc2',title: 'Bread', body: 'A man is eating bread.' },
-   { _id: 'doc3', title: 'Butter', body: 'A man is eating bread and butter.' }
+  { _id: 'doc1', title: 'Milk', body: 'A man is drinking milk.', topic: 'a' },
+  { _id: 'doc2',title: 'Bread', body: 'A man is eating bread.', topic: 'a' },
+   { _id: 'doc3', title: 'Butter', body: 'A man is eating bread and butter.', topic: 'b' }
 ]
 docs.forEach((doc) => indexDocument(index, doc, analyzer))
 
@@ -42,6 +43,9 @@ console.log(JSON.stringify(await searchIndex(index, 'breet', {
   fuzziness: {
     maxDistance: 2,
     fixedPrefixLength: 3
+  },
+  filter: {
+    topic: 'a'
   },
   getDocument: (d) => docs.find(({_id}) => _id === d)
 }, analyzer), null, 2))

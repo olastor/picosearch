@@ -20,7 +20,7 @@ export const evaluateFilter = (
       const fieldMappingType: string =_.get(index.mappings, key) 
 
       if (fieldMappingType) {
-        operands.push(FIELD_CLASSES[fieldMappingType].filterDocuments(index, key, fieldMappingType, value))
+        operands.push(FIELD_CLASSES[fieldMappingType].filterDocuments(index.fields[key], value))
         continue
       }
 
