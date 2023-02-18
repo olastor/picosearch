@@ -1,7 +1,7 @@
 import { 
   findRemovedPartsByTokenizer,
   reconstructTokenizedDoc
-} from '../src/utils'
+} from '../src/utils/highlight'
 
 describe('Utils', () => {
   describe('Doc Reconstruction', () => {

@@ -40,12 +40,22 @@ export interface TextAnalyzer {
   stopwords: string[];
 }
 
+export interface TrieNode<T> {
+  children: { [char: string]: TrieNode<T> };
+  items: T[];
+}
+
 export interface QueryOptions {
   queryFields?: string[] | {
     weight?: number,
     b?: number,
     highlight?: boolean
   }[];
+
+  fuzziness: {
+    maxDistance: number;
+    fixedPrefixLength: number;
+  };
 
   filter?: {
     [key: string]: any
@@ -55,7 +65,12 @@ export interface QueryOptions {
 
   offset: number;
 
-  getDocument?: (documentId: string) => string | Promise<string>;
+  highlightTags: {
+    open: string;
+    close: string;
+  }
+
+  getDocument?: (documentId: string | number) => Promise<{ [key: string]: any } | null> | null;
   
   /** Object for specifying custom BM25 parameters. */
   bm25: {
@@ -84,7 +99,7 @@ export type TextFieldIndex = {
     * is the document ID this token is present and the second value
     * equals to the frequency of that token in the document.
     */
-  docFreqsByToken: { [key: string]: [number, number][] };
+  docFreqsByToken: TrieNode<[number, number]>;
 
   /** A mapping for retrieving the length, i.e. the count of words, of a document by its ID. */
   docLengths: { [key: string]: number };
@@ -98,7 +113,7 @@ export type TextFieldIndex = {
 
 // [num, [docId2, docId2]]
 export type NumberFieldIndex = [number, number[]][]
-export type KeywordFieldIndex = { [keyword: string]: number[] };
+export type KeywordFieldIndex = TrieNode<number>;
 export type MappingType = 'text' | 'keyword' | 'number' | 'date'
 
 export interface SearchIndexMapping {
@@ -108,25 +123,29 @@ export interface SearchIndexMapping {
 export interface SearchIndex {
   length: number;
   mappings: SearchIndexMapping; 
-  lastId: number;
-  ids: {
-    [key: string]: number
-  }
+  internalIds: {
+    [originalId: string]: number
+  },
+  originalIds: {
+    [internalId: string]: string | number
+  },
   fields: {
     [key: string]: TextFieldIndex | NumberFieldIndex | KeywordFieldIndex
   }
 }
 
-/** Data structure for a search result. */
-export interface SearchResult {
-  /** The document ID, i.e., the array index in the document array used for index generation. */
-  docId: number;
+export interface SearchResultsHit {
+  _id: string | number;
+  _score: number;
+  _source?: { [key: string]: any } | null;
+  highlight?: { [key: string]: string };
+}
 
-  /** 
-    * A numeric score returned by the BM25 algorithm. A higher score means higher relevance.
-    * Scores generally cannot be compared across different queries. 
-    */
-  score: number;
+/** Data structure for a search result. */
+export interface SearchResults {
+  total: number;
+  maxScore: number;
+  hits: SearchResultsHit[];
 }
 
 export interface IndexField {

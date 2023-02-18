@@ -1,8 +1,9 @@
 import { IndexField, KeywordFieldIndex } from '../interfaces'
+import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/trie'
 
-export class KeywordField  {
+export default class KeywordField  {
   public static initialize(): KeywordFieldIndex {
-    return {}
+    return { children: {}, items: [] }
   }
 
   public static indexDocument(
@@ -15,11 +16,7 @@ export class KeywordField  {
       return
     }
 
-    if (typeof fieldIndex[documentFieldValue] === 'undefined') {
-      fieldIndex[documentFieldValue] = [documentId]
-    } else {
-      fieldIndex[documentFieldValue].push(documentId)
-    }
+    trieInsert<number>(fieldIndex, documentId, documentFieldValue)
   }
 
   // slow
@@ -27,16 +24,8 @@ export class KeywordField  {
     fieldIndex: KeywordFieldIndex,
     documentId: number
   ): void {
-    for (const key of Object.keys(fieldIndex)) {
-      const foundIndex = fieldIndex[key].findIndex(x => x === documentId)
-      if (foundIndex) {
-        fieldIndex[key].splice(foundIndex, 1) 
-      }
-
-      if (fieldIndex[key].length === 0) {
-        delete fieldIndex[key]
-      }
-    }
+    // TODO
+    // trieDelete(fieldIndex, documentId)
   }
 
   public static updateDocument(
@@ -46,6 +35,26 @@ export class KeywordField  {
   ): void {
     this.removeDocument(fieldIndex, documentId)
     this.indexDocument(fieldIndex, documentId, documentFieldValue)
+  }
+
+  public static filterDocuments(
+    fieldIndex: KeywordFieldIndex,
+    filter: string | string[]
+  ): number[] {
+    if (Array.isArray(filter)) {
+      const invalidArrayItem = filter.find(item => typeof item !== 'string')
+      if (invalidArrayItem) {
+        throw new Error(`Invalid value '${invalidArrayItem}' provided for filtering the '${fieldIndex}' field.`)
+      }
+
+      return [...new Set((filter as string[])
+        .flatMap(keyword => KeywordField.filterDocuments(fieldIndex, keyword)))]
+    } else if (typeof filter === 'string') {
+      const node = trieSearch<number>(fieldIndex, filter)
+      return node ? node.items : []
+    } else {
+      throw new Error(`Invalid value '${filter}' provided for filtering the field.`)
+    }
   }
 }
 
