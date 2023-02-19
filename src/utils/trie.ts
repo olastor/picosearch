@@ -27,7 +27,7 @@ export const trieSearch = <T>(
   requireTerminal = true
 ): TrieNode<T> | null => {
   const chars = sequence.split('')
-  let node = _.cloneDeep(root)
+  let node = root
   for (const c of chars) {
     if (typeof node.children[c] === 'undefined') {
       return null

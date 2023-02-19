@@ -49,7 +49,8 @@ export interface QueryOptions {
   queryFields?: string[] | {
     weight?: number,
     b?: number,
-    highlight?: boolean
+    highlight?: boolean,
+    snippet?: boolean
   }[];
 
   fuzziness: {

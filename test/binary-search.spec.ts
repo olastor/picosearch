@@ -13,6 +13,7 @@ describe('Binary Search', () => {
     expect(binarySearch(4, [], true)).toBe(0)
   })
 
+  // TODO: fix infinite loops ?
   test.prop([
     fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
       fc.constant(arr.sort((a, b) => (a - b))),
