@@ -175,6 +175,8 @@ export const searchIndex = async (
   }
 
   let highlightedFields: string[] = []
+  let snippetFields: string[] = []
+
   if (query) {
     let textFields: string[] = []
     let b: number[] = []
@@ -208,6 +210,10 @@ export const searchIndex = async (
           highlightedFields.push(field)
         }
 
+        if (fieldOpts['snippet'] === true) {
+          snippetFields.push(field)
+        }
+
         textFields.push(field)
       })
     } else {
@@ -238,6 +244,7 @@ export const searchIndex = async (
         }
       }
     }
+
 
     if (queryTokens.length === 0) {
       return {
@@ -272,28 +279,42 @@ export const searchIndex = async (
         _source
       }
 
-      if (_source && highlightedFields.length > 0) {
-        const doHighlight = (text: string) => {
-          const tokensRaw = analyzer.tokenizer(text)
-          const tokenizerGaps = findRemovedPartsByTokenizer(text, tokensRaw)
-          const tokensHighlighted = tokensRaw.map(token => 
-            queryTokens.includes(preprocessToken(token, analyzer))
-              ? `${options.highlightTags.open}${token}${options.highlightTags.close}`
-              : token)
-          
-          return reconstructTokenizedDoc(
-            tokensHighlighted, 
-            tokenizerGaps
-          )
+      const doHighlight = (text: string): string | string[] => {
+        if (Array.isArray(text)) {
+          return text.map(doHighlight) as string[]
         }
 
+        const tokensRaw = analyzer.tokenizer(text)
+        const tokenizerGaps = findRemovedPartsByTokenizer(text, tokensRaw)
+        const tokensHighlighted = tokensRaw.map(token => 
+          queryTokens.includes(preprocessToken(token, analyzer))
+            ? `${options.highlightTags.open}${token}${options.highlightTags.close}`
+            : token)
+        
+        return reconstructTokenizedDoc(
+          tokensHighlighted, 
+          tokenizerGaps
+        )
+      }
+
+      if (_source && highlightedFields.length > 0) {
         highlightedFields.forEach(field => {
           const text = _.get(_source, field)
-          highlight[field] = Array.isArray(text) ? text.map(doHighlight) : doHighlight(text)
+          highlight[field] = doHighlight(text)
         })
 
         hit.highlight = highlight
       }
+
+      // if (_source && snippetFields.length > 0) {
+      //   const doSnippet = (text: string, windowSize = 30): string | string[] => {
+      //     if (Array.isArray(text)) {
+      //       return text.map(doSnippet) as string[]
+      //     }
+
+
+      //   }
+      //   let hl = hit.highlight ? hit.highlight : doHighlight(_.get(_source, field))
 
       hits.push(hit)
     }
