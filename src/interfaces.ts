@@ -2,60 +2,24 @@
   * Options for defining preprocessing steps and parameters for scoring
   * that should be provided both at index and query time.
   */
-export interface TextAnalyzer {
-  /** 
-    * A function to split a text into an array of tokens. 
-    * @defaultValue `(s: string): string[] => s.split(/\s+/g)`
-    */
-  tokenizer: (s: string) => string[];
-  
-  /** 
-    * A function for applying stemming on each token. 
-    * @defaultValue null
-    */
-  stemmer: null | ((s: string) => string);
-  
-  /** 
-    * Whether or not to lowercase tokens as part of preprocessing. 
-    * @defaultValue true
-    */
-  lowercase: boolean;
-
-  /** 
-    * Whether or not to strip punctuations from tokens. 
-    * @defaultValue true
-    */
-  stripPunctuation: boolean;
-
-  /** 
-    * A function to apply a custom transformation on each token before every other preprocessing step. 
-    * @defaultValue null
-    */
-  customTransformation: null| ((s: string) => string);
-
-  /** 
-    * An array of lowercased words that should be ignored. 
-    * @defaultValue []
-    */
-  stopwords: string[];
-}
+export type TextAnalyzer = (text: string) => string[]
 
 export interface TrieNode<T> {
-  children: { [char: string]: TrieNode<T> };
+  c: { [char: string]: TrieNode<T> }; // "children", saving some bytes by using "c"
   items: T[];
 }
 
+export interface QueryField {
+  weight?: number,
+  highlight?: boolean,
+  snippet?: boolean
+}
 export interface QueryOptions {
-  queryFields?: string[] | {
-    weight?: number,
-    b?: number,
-    highlight?: boolean,
-    snippet?: boolean
-  }[];
+  queryFields?: string[] | { [field: string]: QueryField };
 
   fuzziness: {
-    maxDistance: number;
-    fixedPrefixLength: number;
+    maxError: number;
+    prefixLength: number;
   };
 
   filter?: {
@@ -66,10 +30,7 @@ export interface QueryOptions {
 
   offset: number;
 
-  highlightTags: {
-    open: string;
-    close: string;
-  }
+  highlightTags: [string, string];
 
   getDocument?: (documentId: string | number) => Promise<{ [key: string]: any } | null> | null;
   

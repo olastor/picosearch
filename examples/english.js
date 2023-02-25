@@ -41,8 +41,8 @@ console.log(JSON.stringify(await searchIndex(index, 'breet', {
     title: { highlight: true }
   },
   fuzziness: {
-    maxDistance: 2,
-    fixedPrefixLength: 3
+    maxError: 2,
+    prefixLength: 3
   },
   filter: {
     topic: 'a'

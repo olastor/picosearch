@@ -9,12 +9,12 @@ export const trieInsert = <T>(
   const chars = sequence.split('')
   let node = root
   for (const c of chars) {
-    if (!node.children[c]) {
-      let newNode: TrieNode<T> = { children: {}, items: [] }
-      node.children[c] = newNode
+    if (!node.c[c]) {
+      let newNode: TrieNode<T> = { c: {}, items: [] }
+      node.c[c] = newNode
       node = newNode
     } else {
-      node = node.children[c]
+      node = node.c[c]
     }
   }
 
@@ -29,10 +29,10 @@ export const trieSearch = <T>(
   const chars = sequence.split('')
   let node = root
   for (const c of chars) {
-    if (typeof node.children[c] === 'undefined') {
+    if (typeof node.c[c] === 'undefined') {
       return null
     } else {
-      node = node.children[c]
+      node = node.c[c]
     }
   }
 
@@ -40,14 +40,16 @@ export const trieSearch = <T>(
 }
 
 export const trieDelete = <T>(
-  root: TrieNode<T>, 
+  node: TrieNode<T>, 
   item: T,
-  sequence: string,
   eql: (a: T, b: T) => boolean = (a, b) => a === b
 ): void => {
-  const node = trieSearch(root, sequence)
-  if (node !== null) {
-    node.items.splice(node.items.findIndex(x => eql(x, item)), 1)
+  if (node.items && node.items.length > 0) {
+    node.items = node.items.filter(x => !eql(x, item))
+  }
+
+  if (node.c) {
+    Object.values(node.c).forEach(n => trieDelete(n, item, eql))
   }
 }
 
@@ -77,14 +79,14 @@ export const trieFuzzySearch = <T>(
       return []
     }
 
-    if (Object.keys(currentNode.children).length === 0) {
+    if (Object.keys(currentNode.c).length === 0) {
       return currentNode.items.length > 0 ? [[currentSequence, currentNode]] : []
     }
 
     if (charsLeft.length === 0) {
       return [
         ...(currentNode.items.length > 0 ? [[currentSequence, currentNode] as [string, TrieNode<T>]] : []),
-        ...Object.entries(currentNode.children)
+        ...Object.entries(currentNode.c)
           .flatMap(([c, n]) => 
             recurse(n, currentDistance + 1, currentSequence + c, [])
           )
@@ -96,7 +98,7 @@ export const trieFuzzySearch = <T>(
       ...recurse(currentNode, currentDistance + 1, currentSequence, charsLeft.slice(1))
     ]
 
-    for (const [char, childNode] of Object.entries(currentNode.children)) {
+    for (const [char, childNode] of Object.entries(currentNode.c)) {
       if (char === charsLeft[0]) {
         results = results.concat(recurse(childNode, currentDistance, currentSequence + char, charsLeft.slice(1)))
       } else {

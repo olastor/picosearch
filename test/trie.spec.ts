@@ -7,7 +7,7 @@ import { TrieNode } from '../src/interfaces'
 describe('Trie', () => {
   test('should insert and find strings', () => {
     const trie: TrieNode<number> = {
-      children: {},
+      c: {},
       items: []  
     }
 
@@ -30,7 +30,7 @@ describe('Trie', () => {
 
   test('should fuzzy match', () => {
     const trie: TrieNode<number> = {
-      children: {},
+      c: {},
       items: []  
     }
 
@@ -63,7 +63,7 @@ describe('Trie', () => {
     fc.uniqueArray(fc.string(), { minLength: 1 })
   ])('should return correct leaf with max distance = 0', (arr) => {
     const trie: TrieNode<number> = {
-      children: {},
+      c: {},
       items: []  
     }
     arr.forEach((s, i) => trieInsert<number>(trie, i, s))

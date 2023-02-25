@@ -3,14 +3,13 @@ import {
   TextFieldIndex
 } from '../interfaces'
 
-import { preprocessText } from '../utils/preprocessing'
 import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/trie'
 
 export default class TextField  {
   public static initialize() {
     return  {
       docFreqsByToken: {
-        children: {},
+        c: {},
         items: []
       },
       docLengths: {},
@@ -30,8 +29,8 @@ export default class TextField  {
     // }
 
     const tokens = Array.isArray(documentFieldValue)
-      ? documentFieldValue.flatMap(text => preprocessText(text, analyzer))
-      : preprocessText(documentFieldValue, analyzer)
+      ? documentFieldValue.flatMap(text => analyzer(text))
+      : analyzer(documentFieldValue)
 
     const tokenFreqs: { [key: string]: number } = {}
     tokens.forEach((token: string) => {
