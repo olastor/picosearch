@@ -66,7 +66,6 @@ export const indexDocument = (
   if (typeof index.internalIds[doc._id] !== 'undefined') {
     throw new Error('Duplicate ID')
   }
-  // const analyzer = checkSearchOptions(analyzer)
 
   let internalId
   do {

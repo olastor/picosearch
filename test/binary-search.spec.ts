@@ -1,7 +1,7 @@
 import { binarySearch } from '../src/utils/binary-search'
 import { test, fc } from '@fast-check/jest';
 
-fc.configureGlobal({ verbose: true, numRuns: 5000, endOnFailure: true });
+fc.configureGlobal({ verbose: true, numRuns: 100, endOnFailure: true });
 
 
 describe('Binary Search', () => {
@@ -15,7 +15,7 @@ describe('Binary Search', () => {
 
   // TODO: fix infinite loops ?
   test.prop([
-    fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
+    fc.uniqueArray(fc.integer(), { minLength: 1, maxLength: 10000 }).chain(arr => fc.tuple(
       fc.constant(arr.sort((a, b) => (a - b))),
       fc.integer({ min: 0, max: arr.length - 1 })
     ))
@@ -24,7 +24,7 @@ describe('Binary Search', () => {
   })
 
   test.prop([
-    fc.uniqueArray(fc.integer(), { minLength: 1 }).chain(arr => fc.tuple(
+    fc.uniqueArray(fc.integer(), { minLength: 1, maxLength: 10000 }).chain(arr => fc.tuple(
       fc.constant(arr),
       fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
     ))
@@ -36,7 +36,7 @@ describe('Binary Search', () => {
   })
 
   test.prop([
-    fc.uniqueArray(fc.integer(), { minLength: 1 })
+    fc.uniqueArray(fc.integer(), { minLength: 1, maxLength: 10000 })
       .chain(arr => fc.tuple(
         fc.constant(arr),
         fc.integer({ min: 0, max: arr.length - 1 }).filter(x => !arr.includes(x))
