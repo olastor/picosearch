@@ -12,12 +12,12 @@ export const evaluateFilter = (
   filter: any,
   operator = '$and'
 ): number[] => {
-  const keys = Object.keys(filter)
-
   let operands: number[][] = []
-  if (typeof filter === 'object') {
+  if (Array.isArray(filter)) {
+    operands = filter.map(f => evaluateFilter(index, f)) 
+  } else if (typeof filter === 'object') {
     for (const [key, value] of Object.entries(filter)) {
-      const fieldMappingType: string =_.get(index.mappings, key) 
+      const fieldMappingType: string = index.mappings[key]
 
       if (fieldMappingType) {
         operands.push(FIELD_CLASSES[fieldMappingType].filterDocuments(index.fields[key], value))
@@ -31,8 +31,6 @@ export const evaluateFilter = (
 
       throw new Error(`The field '${fieldMappingType}' does not exist in index and cannot be used for filtering.`)
     }
-  } else if (Array.isArray(filter)) {
-    operands = filter.map(f => evaluateFilter(index, f)) 
   } else {
     throw new Error(`The filter has an invalid type '${typeof filter}'.`)
   }
