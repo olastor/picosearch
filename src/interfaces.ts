@@ -14,6 +14,7 @@ export interface QueryField {
   highlight?: boolean,
   snippet?: boolean
 }
+
 export interface QueryOptions {
   queryFields?: string[] | { [field: string]: QueryField };
 
