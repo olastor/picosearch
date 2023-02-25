@@ -75,7 +75,7 @@ describe('Trie', () => {
       }
     }
 
-    false
+    return true
   })
 
 })
