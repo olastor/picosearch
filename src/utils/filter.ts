@@ -1,12 +1,24 @@
-import { 
-  SearchIndex,
-  NumberFieldIndex,
-  KeywordFieldIndex
-} from '../interfaces'
-import { binarySearch } from './binary-search'
+import { SearchIndex } from '../interfaces'
 import * as _ from './helper'
 import { FIELD_CLASSES } from '../constants'
 
+/**
+  * Retrieves the internal document IDs that match the filter.
+  *
+  *   - A filter is either an object or an array of objects. 
+  *   - Properties specify the field to filter for OR one of the boolean expressions "$and", "$or" or "$not".
+  *   - Specifying an array (e.g., of numbers) instead of an exact filter term always assumes that any of them can match.
+  *   - If there are multiple properties or objects defining filters, they're by default used to find documents that match all filters, EXCEPT a custom boolean filter has been specified in the parent level (in nested filters). 
+  *
+  * Examples:
+  *   
+  *   { tags: ["a", "b"] } => Find documents with either tags=a or tags=b (or both).
+  *   { $and: [{ tags: "a" }, { tags: "b" }] } => Document tags must include both a and b.
+  *   { $not: { tags: ["a", "b"] } } => Every document without tags a or b
+  *   { $not: { createdAt: { $lt: "2022-01-01T00:00:00Z" } } } => Documents from 2022 or later
+  *   { $or: { createdAt: { $gte: "2022-01-01T00:00:00Z" }, $and: [{ tags: "a" }, { tags: "b" }] } } => Documents from 2022 or later or earlier ones with both tags a,b.
+  *
+  */
 export const evaluateFilter = (
   index: SearchIndex,
   filter: any,
@@ -50,6 +62,6 @@ export const evaluateFilter = (
       .filter(id => !union.includes(id))
   }
 
-  throw new Error('')
+  throw new Error('Invalid filter.')
 }
 

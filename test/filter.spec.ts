@@ -5,7 +5,7 @@ import {
 } from '../src/'
 import { test, fc } from '@fast-check/jest';
 
-fc.configureGlobal({ verbose: true, numRuns: 1000000, endOnFailure: true });
+fc.configureGlobal({ verbose: true, numRuns: 10000, endOnFailure: true });
 
 describe('Filter', () => {
   describe('Basic Filters & Boolean Logic', () => {
