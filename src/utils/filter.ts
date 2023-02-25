@@ -13,6 +13,7 @@ export const evaluateFilter = (
   operator = '$and'
 ): number[] => {
   let operands: number[][] = []
+
   if (Array.isArray(filter)) {
     operands = filter.map(f => evaluateFilter(index, f)) 
   } else if (typeof filter === 'object') {
