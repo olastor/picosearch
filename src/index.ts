@@ -7,7 +7,8 @@ import {
   KeywordFieldIndex,
   TextAnalyzer,
   QueryOptions,
-  SearchResultsHit
+  SearchResultsHit,
+  QueryField
 } from './interfaces'
 
 import { DEFAULT_ANALYZER, DEFAULT_QUERY_OPTIONS } from './constants'
@@ -24,9 +25,9 @@ import NumberField from './fields/number'
 import TextField from './fields/text'
 
 import { evaluateFilter } from './utils/filter'
-import { preprocessText, preprocessToken } from './utils/preprocessing'
 import { trieFuzzySearch } from './utils/trie'
 import { findRemovedPartsByTokenizer, reconstructTokenizedDoc } from './utils/highlight'
+import { validateOptions } from './utils/options'
 
 
 
@@ -53,13 +54,8 @@ export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
 export const indexDocument = (
   index: SearchIndex,
   doc: { [key: string]: any },
-  analyzerP: Partial<TextAnalyzer> = DEFAULT_ANALYZER
+  analyzer: TextAnalyzer = DEFAULT_ANALYZER
 ) => {
-  const analyzer: TextAnalyzer = {
-    ...DEFAULT_ANALYZER,
-    ...analyzerP
-  }
-
   if (!(
     typeof doc._id === 'string' && doc._id.length > 0 ||
     typeof doc._id === 'number'
@@ -155,87 +151,36 @@ export const removeDocument = (
 export const searchIndex = async (
   index: SearchIndex,
   query: string,
-  optionsP: Partial<QueryOptions>,
-  analyzerP: Partial<TextAnalyzer> = DEFAULT_ANALYZER
+  options: Partial<QueryOptions>,
+  analyzer: TextAnalyzer = DEFAULT_ANALYZER
 ): Promise<SearchResults> => {
   // const analyzer = checkSearchOptions(options)
-  const analyzer: TextAnalyzer = {
-    ...DEFAULT_ANALYZER,
-    ...analyzerP
-  }
-
-  const options: QueryOptions = {
-    ...DEFAULT_QUERY_OPTIONS,
-    ...optionsP
-  }
+  const optionsValid: QueryOptions = validateOptions(index, options)
 
   let filteredDocumentIds: number[] | null = null
-  if (options.filter) {
-    filteredDocumentIds = evaluateFilter(index, options.filter)
+  if (optionsValid.filter) {
+    filteredDocumentIds = evaluateFilter(index, optionsValid.filter)
   }
 
   let highlightedFields: string[] = []
   let snippetFields: string[] = []
 
   if (query) {
-    let textFields: string[] = []
-    let b: number[] = []
-    let weights: number[] = []
+    let queryTokens = analyzer(query)
+    const textFields = Object.keys(optionsValid.queryFields as QueryField)
 
-    if (Array.isArray(options.queryFields) && options.queryFields.length > 0) {
-      (options.queryFields as string[]).forEach((field => {
-        if (!index.mappings[field]) {
-          throw new Error('Field does not exist.')
-        }
-
-        textFields.push(field)
-        b.push(options.bm25.b)
-        weights.push(1)
-      }))
-    } else if (typeof options.queryFields === 'object') {
-      Object.entries(options.queryFields).forEach(([field, fieldOpts]) => {
-        if (typeof fieldOpts['b'] === 'number') {
-          b.push(fieldOpts['b'])
-        } else {
-          b.push(options.bm25.b)
-        }
-
-        if (typeof fieldOpts['weight'] === 'number') {
-          weights.push(fieldOpts['weight'])
-        } else {
-          weights.push(1)
-        }
-
-        if (fieldOpts['highlight'] === true) {
-          highlightedFields.push(field)
-        }
-
-        if (fieldOpts['snippet'] === true) {
-          snippetFields.push(field)
-        }
-
-        textFields.push(field)
-      })
-    } else {
-      textFields = Object.entries(index.mappings)
-        .filter(([field, type]) => type === 'text')
-        .map(([field]) => field)
-      b = textFields.map(() => options.bm25.b)
-      weights = textFields.map(() => 1)
-    }
-
-
-    let queryTokens = preprocessText(query, analyzer)
-
-    if (options.fuzziness.maxDistance) {
+    if (optionsValid.fuzziness.maxError) {
       const originalTokens = [...queryTokens]
+
+      // enrich query tokens with tokens from the search index
+      // that are similar within the defined error boundary. 
       for (const token of originalTokens) {
         for (const field of textFields) {
           trieFuzzySearch<[number, number]>(
             (index.fields[field] as TextFieldIndex).docFreqsByToken, 
             token,
-            options.fuzziness.maxDistance,
-            options.fuzziness.fixedPrefixLength || 0
+            optionsValid.fuzziness.maxError,
+            optionsValid.fuzziness.prefixLength || 0
           ).forEach(([fuzzyToken]) => {
             if (!queryTokens.includes(fuzzyToken)) {
               queryTokens.push(fuzzyToken)
@@ -257,20 +202,17 @@ export const searchIndex = async (
     const ranked = scoreBM25F(
       queryTokens,
       index,
-      textFields,
-      weights,
-      b,
-      options.bm25.k1,
+      optionsValid,
       filteredDocumentIds
     )
 
     const hits = []
 
-    for (const [docId, _score] of ranked.slice(options.offset, options.size)) {
+    for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.size)) {
       let _source: any = null
       let highlight: { [key: string]: string | string[] } = {}
-      if (options.getDocument) {
-        _source = await options.getDocument(index.originalIds[docId])
+      if (optionsValid.getDocument) {
+        _source = await optionsValid.getDocument(index.originalIds[docId])
       }
 
       const hit: SearchResultsHit = {
@@ -284,12 +226,15 @@ export const searchIndex = async (
           return text.map(doHighlight) as string[]
         }
 
-        const tokensRaw = analyzer.tokenizer(text)
+        const tokensRaw = analyzer(text)
         const tokenizerGaps = findRemovedPartsByTokenizer(text, tokensRaw)
-        const tokensHighlighted = tokensRaw.map(token => 
-          queryTokens.includes(preprocessToken(token, analyzer))
-            ? `${options.highlightTags.open}${token}${options.highlightTags.close}`
-            : token)
+        const tokensHighlighted = tokensRaw.map(token => {
+          const analyzedTokens = analyzer(token)
+          const analyzedToken = analyzedTokens.length === 0 ? '' : analyzedTokens[0]
+          return queryTokens.includes(analyzedToken)
+            ? `${optionsValid.highlightTags[0]}${token}${optionsValid.highlightTags[1]}`
+            : token
+        })
         
         return reconstructTokenizedDoc(
           tokensHighlighted, 

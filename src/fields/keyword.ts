@@ -3,7 +3,7 @@ import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/tr
 
 export default class KeywordField  {
   public static initialize(): KeywordFieldIndex {
-    return { children: {}, items: [] }
+    return { c: {}, items: [] }
   }
 
   public static indexDocument(

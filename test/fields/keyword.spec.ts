@@ -5,7 +5,7 @@ import { test, fc } from '@fast-check/jest';
 describe('Keyword Field', () => {
   test('should initalize field', () => {
     expect(KeywordField.initialize()).toEqual({
-      children: {},
+      c: {},
       items: []
     })
   })

@@ -10,38 +10,41 @@ import NumberField from './fields/number'
 import TextField from './fields/text'
 import DateField from './fields/date'
 
+const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
+
 /** 
   * The default search options. See interface for documentation of default values.
   */
-export const DEFAULT_ANALYZER: TextAnalyzer = {
-  tokenizer: (s: string): string[] => s.split(/\s+/g),
-  stemmer: null,
-  customTransformation: null,
-  lowercase: true,
-  stripPunctuation: true,
-  stopwords: []
+export const DEFAULT_ANALYZER: TextAnalyzer = (text: string = '') => {
+  const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
+  return tokens
+    .map(token => token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase())
+    .filter(token => token)
 }
 
 export const DEFAULT_QUERY_OPTIONS: QueryOptions = {
   offset: 0,
   size: 10,
   fuzziness: {
-    maxDistance: 0,
-    fixedPrefixLength: 0
+    maxError: 0,
+    prefixLength: 0
   },
-  highlightTags: {
-    open: '<em>',
-    close: '</em>'
-  },
+  highlightTags: ['<em>', '</em>'],
   bm25: {
     k1: 1.2,
     b: 0.75
   }
 }
 
+export const DEFAULT_FIELD_OPTIONS = {
+  weight: 1,
+  highlight: false,
+  snippet: false
+}
+
 export const EMPTY_TEXT_FIELD_INDEX: TextFieldIndex = {
   docFreqsByToken: {
-    children: {},
+    c: {}, 
     items: []
   },
   docLengths: {},

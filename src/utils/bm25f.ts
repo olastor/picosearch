@@ -1,66 +1,65 @@
-import { SearchIndex, TextFieldIndex } from '../interfaces'
+import { SearchIndex, QueryOptions, QueryField, TextFieldIndex } from '../interfaces'
 import { trieSearch } from './trie'
 
-// https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/craswell_trec05.pdf
 // https://arxiv.org/pdf/0911.5046.pdf
+// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-combined-fields-query.html
+// http://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf
 export const scoreBM25F = (
   queryTokens: string[],
   index: SearchIndex,
-  fields: string[],
-  weights: number[],
-  b: number[],
-  k1: number,
+  validatedOptions: QueryOptions,
   documentIds: null | number[], 
 ): [number, number][] => {
   const docScores: { [doc: string]: number } = {}
-  let pseudoFreqs: { [doc: string]: number } = {}
+  const numberOfDocs = documentIds === null ? index.length : documentIds.length
+  let avgDl: number = 0
 
-  for (const token of queryTokens) {
-    for (let fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
-      const field = fields[fieldIndex]
-      const textIndex = index.fields[field] as TextFieldIndex
+  const queryFields: { [field: string]: QueryField } = validatedOptions.queryFields as { [field: string]: QueryField }
+  const fields: string[] = Object.keys(queryFields)
+  const k1 = validatedOptions.bm25.k1
+  const b = validatedOptions.bm25.b
 
-      const node = trieSearch(textIndex.docFreqsByToken, token)
-      if (!node) {
-        continue
-      }
-
-      const averageDocumentLength = documentIds === null 
-        ? (textIndex.totalDocLengths / textIndex.docCount)
-        : (
-          documentIds
-            .map(docId => textIndex.docLengths[docId])
-            .reduce((partialSum, x) => partialSum + x, 0) /   
-          documentIds.length
-        )
-
-      for (const [docId, freq] of node.items) {
-        if (documentIds && !documentIds.includes(docId)) continue
-
-        const normalizedTermFrequency = freq / (
-          1 + 
-          b[fieldIndex] * 
-          ((textIndex.docLengths[docId] / averageDocumentLength) - 1)
-        )
-        pseudoFreqs[docId] = (pseudoFreqs[docId] || 0) + (weights[fieldIndex] * normalizedTermFrequency)
-      }
-    }
-
-    const numberOfDocs = documentIds === null ? index.length : documentIds.length
-    const documentFrequency = Object.keys(pseudoFreqs).length
-    const idf = Math.log(
-      1 + 
-      (numberOfDocs - documentFrequency + 0.5) /
-      (documentFrequency + 0.5)
-    )
-
-    for (const [docId, pseudoFreq] of Object.entries(pseudoFreqs)) {
-      const termScore = (pseudoFreq / (k1 + pseudoFreq)) * idf
-      docScores[docId] = (docScores[docId] || 0) + termScore
-      pseudoFreqs[docId] = 0
-    }
+  if (documentIds === null) {
+    avgDl = fields
+      .map(field => (index.fields[field] as TextFieldIndex).totalDocLengths / numberOfDocs)
+      .reduce((acc, x) => acc + x, 0)
+  } else {
+    // TODO: filter
   }
 
+  for (const token of queryTokens) {
+    const dlTilde: { [doc: string]: number } = {}
+    const tfTilde: { [doc: string]: number } = {}
+
+    let docIds = new Set<number>()
+    let df = 0
+    fields.forEach(field => {
+      const textIndex = index.fields[field] as TextFieldIndex
+      const node = trieSearch(textIndex.docFreqsByToken, token)
+      if (!node) {
+        return
+      }
+
+      node.items.forEach(([docId, freq]: [number, number]) => {
+        docIds.add(docId)
+        tfTilde[docId] = (tfTilde[docId] || 0) + (queryFields[field].weight || 1) * freq
+        dlTilde[docId] = (dlTilde[docId] || 0) + textIndex.docLengths[docId]
+        df++
+      })
+    })
+
+    for (const docId of docIds) {
+      const idf = Math.log(
+        1 +
+        (numberOfDocs - df + 0.5) / 
+        (df + 0.5)
+      )
+
+      const score = (tfTilde[docId] / (tfTilde[docId] + k1 * (1 - b + b * dlTilde[docId] / avgDl))) * idf
+
+      docScores[docId] = (docScores[docId] || 0) + score
+    }
+  }
 
   const ranked = Object.entries(docScores).sort((a, b) => b[1] - a[1])
     .map((x) => [Number(x[0]), x[1]] as [number, number]) 
