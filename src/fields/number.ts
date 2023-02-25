@@ -88,10 +88,11 @@ export default class NumberField {
 
     if (typeof filter === 'object') {
       const { $gt, $gte, $lt, $lte, $ne, ...otherParams } = filter
-      if (otherParams) {
-        throw new Error('Invalid params')
+
+      if (Object.keys(otherParams).length > 0) {
+        throw new Error(`Unknown number filter options specified: ${otherParams.join(', ')}.`)
       }
-    
+
       if (typeof $ne === 'number') {
         return [...new Set(fieldIndex.filter(([val]) => val !== $ne).flatMap(([val, docIds]) => docIds))]
       }
@@ -106,7 +107,8 @@ export default class NumberField {
           true,
           ([value]) => value
         )
-        minIndex = fieldIndex[minIndex][0] === $gt ? minIndex + 1 : minIndex
+        if (minIndex > fieldIndex.length - 1) return []
+        minIndex = fieldIndex[minIndex][0] <= $gt ? minIndex + 1 : minIndex
       }
 
       if (typeof $gte === 'number') {
@@ -116,7 +118,8 @@ export default class NumberField {
           true,
           ([value]) => value
         )
-        minIndex = fieldIndex[minIndex][0] === $gt ? minIndex : minIndex - 1
+        if (minIndex > fieldIndex.length - 1) return []
+        minIndex = fieldIndex[minIndex][0] < $gte ? minIndex + 1 : minIndex
       }
 
       if (typeof $lt === 'number') {
@@ -126,7 +129,10 @@ export default class NumberField {
           true,
           ([value]) => value
         )
-        maxIndex = fieldIndex[maxIndex][0] === $lt ? maxIndex - 1 : maxIndex
+
+        if (maxIndex < fieldIndex.length && fieldIndex[maxIndex][0] >= $lt) {
+          maxIndex = maxIndex - 1
+        }
       }
 
       if (typeof $lte === 'number') {
@@ -136,14 +142,16 @@ export default class NumberField {
           true,
           ([value]) => value
         )
-        maxIndex = fieldIndex[maxIndex][0] === $lte ? maxIndex : maxIndex + 1
+        if (maxIndex < fieldIndex.length && fieldIndex[maxIndex][0] > $lte) {
+          maxIndex = maxIndex - 1        
+        }
       }
 
       if (minIndex > maxIndex) {
-        throw new Error('Invalid range filter')
+        return []
       }
 
-      return [...(new Set(fieldIndex.slice(minIndex, maxIndex).flatMap((x) => x[1])))]
+      return [...(new Set(fieldIndex.slice(minIndex, maxIndex + 1).flatMap((x) => x[1])))]
     }
 
     throw new Error('Invalid filter provided')
