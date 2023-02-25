@@ -21,7 +21,7 @@ import { FIELD_CLASSES } from '../constants'
   */
 export const evaluateFilter = (
   index: SearchIndex,
-  filter: any,
+  filter: any, // TODO: interface?
   operator = '$and'
 ): number[] => {
   let operands: number[][] = []
