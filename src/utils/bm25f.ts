@@ -1,9 +1,15 @@
 import { SearchIndex, QueryOptions, QueryField, TextFieldIndex } from '../interfaces'
 import { trieSearch } from './trie'
 
-// https://arxiv.org/pdf/0911.5046.pdf
-// https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-combined-fields-query.html
-// http://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf
+/**
+  * Calculates scores for documents matching the query tokens and returns a ranked list of most
+  * relevant documents. The formula used is the simple BM25F version as specified in [1] and used
+  * by Elasticsearch's "combined_field" query [2] for scoring across multiple field in the same index.
+  *
+  * [1] http://www.staff.city.ac.uk/~sbrp622/papers/foundations_bm25_review.pdf
+  * [2] https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-combined-fields-query.html
+  * [3] https://arxiv.org/pdf/0911.5046.pdf
+  */
 export const scoreBM25F = (
   queryTokens: string[],
   index: SearchIndex,
