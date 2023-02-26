@@ -1,9 +1,11 @@
 import {
   TextAnalyzer,
+  TextTokenizer,
   TextFieldIndex
 } from '../interfaces'
 
 import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/trie'
+import { preprocessText } from '../utils/preprocessing'
 
 export default class TextField  {
   public static initialize() {
@@ -22,15 +24,16 @@ export default class TextField  {
     fieldIndex: TextFieldIndex,
     documentId: number,
     documentFieldValue: string,
-    analyzer: TextAnalyzer
+    analyzer: TextAnalyzer,
+    tokenizer: TextTokenizer
   ): void {
     // if (typeof documentFieldValue !== 'string') {
     //   throw new Error('Text must be a string!')
     // }
 
     const tokens = Array.isArray(documentFieldValue)
-      ? documentFieldValue.flatMap(text => analyzer(text))
-      : analyzer(documentFieldValue)
+      ? documentFieldValue.flatMap(text => preprocessText(text, analyzer, tokenizer))
+      : preprocessText(documentFieldValue, analyzer, tokenizer)
 
     const tokenFreqs: { [key: string]: number } = {}
     tokens.forEach((token: string) => {
