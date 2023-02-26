@@ -28,17 +28,21 @@ export const validateOptions = (
     throw new Error(`Encountered unknown options: ${Object.keys(otherProps).join(', ')}`)
   }
 
-  if (typeof size !== 'number' || size < 0) {
+  if (typeof size !== 'undefined' && (typeof size !== 'number' || size < 0)) {
     throw new Error('Option "size" must be a non-negative integer.')
   }
   
-  validatedOptions.size = size
+  if (typeof size !== 'undefined') {
+    validatedOptions.size = size
+  }
 
-  if (typeof offset !== 'number' || size < 0) {
+  if (typeof offset !== 'undefined' && (typeof offset !== 'number' || offset < 0)) {
     throw new Error('Option "offset" must be a non-negative integer.')
   }
 
-  validatedOptions.offset = offset
+  if (typeof offset !== 'undefined') {
+    validatedOptions.offset = offset
+  }
 
   if (fuzziness) {
     const { maxError, prefixLength } = fuzziness
@@ -167,6 +171,11 @@ export const validateOptions = (
 
   if (typeof getDocument !== 'undefined' && typeof getDocument !== 'function') {
     throw new Error('Option "getDocument" must be a function if specified.')
+  }
+
+  
+  if (typeof getDocument !== 'undefined') {
+    validatedOptions.getDocument = getDocument
   }
 
   return validatedOptions
