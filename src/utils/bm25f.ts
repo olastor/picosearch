@@ -13,25 +13,21 @@ import { trieSearch } from './trie'
 export const scoreBM25F = (
   queryTokens: string[],
   index: SearchIndex,
-  validatedOptions: QueryOptions,
-  documentIds: null | number[], 
+  validatedOptions: QueryOptions
 ): [number, number][] => {
   const docScores: { [doc: string]: number } = {}
-  const numberOfDocs = documentIds === null ? index.length : documentIds.length
-  let avgDl: number = 0
+
 
   const queryFields: { [field: string]: QueryField } = validatedOptions.queryFields as { [field: string]: QueryField }
   const fields: string[] = Object.keys(queryFields)
   const k1 = validatedOptions.bm25.k1
   const b = validatedOptions.bm25.b
 
-  if (documentIds === null) {
-    avgDl = fields
-      .map(field => (index.fields[field] as TextFieldIndex).totalDocLengths / numberOfDocs)
-      .reduce((acc, x) => acc + x, 0)
-  } else {
-    // TODO: filter
-  }
+  // TODO: should those be adjusted when filtering? (potentially slow)
+  const numberOfDocs = index.length
+  const avgDl: number = fields
+    .map(field => (index.fields[field] as TextFieldIndex).totalDocLengths / numberOfDocs)
+    .reduce((acc, x) => acc + x, 0)
 
   for (const token of queryTokens) {
     const dlTilde: { [doc: string]: number } = {}

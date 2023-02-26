@@ -17,6 +17,7 @@ export const validateOptions = (
     getDocument, 
     bm25,
     highlightTags,
+    filter,
     ...otherProps
   } = options
 
@@ -26,6 +27,11 @@ export const validateOptions = (
 
   if (Object.keys(otherProps).length > 0) {
     throw new Error(`Encountered unknown options: ${Object.keys(otherProps).join(', ')}`)
+  }
+
+  if (filter) {
+    // TODO: validate more
+    validatedOptions.filter = filter
   }
 
   if (typeof size !== 'undefined' && (typeof size !== 'number' || size < 0)) {

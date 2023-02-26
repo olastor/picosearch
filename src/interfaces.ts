@@ -2,7 +2,8 @@
   * Options for defining preprocessing steps and parameters for scoring
   * that should be provided both at index and query time.
   */
-export type TextAnalyzer = (text: string) => string[]
+export type TextAnalyzer = (token: string) => string
+export type TextTokenizer = (text: string) => string[]
 
 export interface TrieNode<T> {
   c: { [char: string]: TrieNode<T> }; // "children", saving some bytes by using "c"

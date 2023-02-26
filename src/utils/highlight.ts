@@ -1,3 +1,8 @@
+import {
+  TextAnalyzer,
+  TextTokenizer
+} from '../interfaces'
+
 export const findRemovedPartsByTokenizer = (doc: string, docTokens: string[]): string[] => {
   let currentIndex = 0
 
@@ -33,26 +38,19 @@ export const reconstructTokenizedDoc = (tokens: string[], gaps: string[]): strin
  *
  * @returns The documents array with words highlighted that match the query.
  */
-// export const highlightQueryInDocs = (
-//   query: string, 
-//   docs: string[],
-//   options: SearchOptions = DEFAULT_SEARCH_OPTIONS, 
-//   tagBefore = '<em>',
-//   tagAfter = '</em>'
-// ) => {
-//   const optionsValid = checkSearchOptions(options)
-
-//   const queryTokens = preprocessText(query, optionsValid)
-//   const highlightedDocs = docs.map(doc => {
-//     const docTokensRaw = optionsValid.tokenizer(doc)
-//     const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
-//     const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(preprocessToken(token, optionsValid))
-//       ? `${tagBefore}${token}${tagAfter}`
-//       : token
-//     )
-//     return reconstructTokenizedDoc(docTokensHighlighted, tokenizerGaps)
-//   })
-
-
-//   return highlightedDocs
-// }
+export const highlightText = (
+  queryTokens: string[], 
+  doc: string,
+  analyzer: TextAnalyzer,
+  tokenizer: TextTokenizer,
+  tagBefore = '<em>',
+  tagAfter = '</em>'
+): string => {
+  const docTokensRaw = tokenizer(doc)
+  const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
+  const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(analyzer(token))
+    ? `${tagBefore}${token}${tagAfter}`
+    : token
+  )
+  return reconstructTokenizedDoc(docTokensHighlighted, tokenizerGaps)
+}

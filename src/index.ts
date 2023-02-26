@@ -6,14 +6,16 @@ import {
   NumberFieldIndex,
   KeywordFieldIndex,
   TextAnalyzer,
+  TextTokenizer,
   QueryOptions,
   SearchResultsHit,
   QueryField
 } from './interfaces'
 
-import { DEFAULT_ANALYZER, DEFAULT_QUERY_OPTIONS } from './constants'
+import { DEFAULT_ANALYZER, DEFAULT_TOKENIZER, DEFAULT_QUERY_OPTIONS } from './constants'
 
 import { scoreBM25F } from './utils/bm25f'
+import { preprocessText } from './utils/preprocessing'
 
 export * from './constants'
 export * from './interfaces'
@@ -26,7 +28,7 @@ import TextField from './fields/text'
 
 import { evaluateFilter } from './utils/filter'
 import { trieFuzzySearch } from './utils/trie'
-import { findRemovedPartsByTokenizer, reconstructTokenizedDoc } from './utils/highlight'
+import { highlightText } from './utils/highlight'
 import { validateOptions } from './utils/options'
 
 
@@ -54,7 +56,8 @@ export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
 export const indexDocument = (
   index: SearchIndex,
   doc: { [key: string]: any },
-  analyzer: TextAnalyzer = DEFAULT_ANALYZER
+  analyzer: TextAnalyzer = DEFAULT_ANALYZER,
+  tokenizer: TextTokenizer = DEFAULT_TOKENIZER
 ) => {
   if (!(
     typeof doc._id === 'string' && doc._id.length > 0 ||
@@ -91,7 +94,8 @@ export const indexDocument = (
         index.fields[field] as TextFieldIndex,
         internalId,
         value,
-        analyzer
+        analyzer,
+        tokenizer
       )
     } else if (type === 'keyword') {
       if (!index.fields[field]) {
@@ -151,7 +155,8 @@ export const searchIndex = async (
   index: SearchIndex,
   query: string,
   options: Partial<QueryOptions>,
-  analyzer: TextAnalyzer = DEFAULT_ANALYZER
+  analyzer: TextAnalyzer = DEFAULT_ANALYZER,
+  tokenizer: TextTokenizer = DEFAULT_TOKENIZER
 ): Promise<SearchResults> => {
   // const analyzer = checkSearchOptions(options)
   const optionsValid: QueryOptions = validateOptions(index, options)
@@ -161,11 +166,12 @@ export const searchIndex = async (
     filteredDocumentIds = evaluateFilter(index, optionsValid.filter)
   }
 
-  let highlightedFields: string[] = []
-  let snippetFields: string[] = []
+  let highlightedFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
+    .filter(([field, opts]) => opts.highlight)
+    .map(([field]) => field)
 
   if (query) {
-    let queryTokens = analyzer(query)
+    let queryTokens = preprocessText(query, analyzer, tokenizer)
     const textFields = Object.keys(optionsValid.queryFields as QueryField)
 
     if (optionsValid.fuzziness.maxError) {
@@ -198,18 +204,23 @@ export const searchIndex = async (
       }
     }
 
-    const ranked = scoreBM25F(
+    let ranked = scoreBM25F(
       queryTokens,
       index,
-      optionsValid,
-      filteredDocumentIds
+      optionsValid
     )
+
+    if (filteredDocumentIds) {
+      // TODO: O(1) map?
+      ranked = ranked.filter(([docId]) => (filteredDocumentIds as number[]).includes(docId))
+    }
 
     const hits = []
 
-    for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.size)) {
+    for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
       let _source: any = null
       let highlight: { [key: string]: string | string[] } = {}
+
       if (optionsValid.getDocument) {
         _source = await optionsValid.getDocument(index.originalIds[docId])
       }
@@ -220,45 +231,30 @@ export const searchIndex = async (
         _source
       }
 
-      const doHighlight = (text: string): string | string[] => {
-        if (Array.isArray(text)) {
-          return text.map(doHighlight) as string[]
-        }
-
-        const tokensRaw = analyzer(text)
-        const tokenizerGaps = findRemovedPartsByTokenizer(text, tokensRaw)
-        const tokensHighlighted = tokensRaw.map(token => {
-          const analyzedTokens = analyzer(token)
-          const analyzedToken = analyzedTokens.length === 0 ? '' : analyzedTokens[0]
-          return queryTokens.includes(analyzedToken)
-            ? `${optionsValid.highlightTags[0]}${token}${optionsValid.highlightTags[1]}`
-            : token
-        })
-        
-        return reconstructTokenizedDoc(
-          tokensHighlighted, 
-          tokenizerGaps
-        )
-      }
-
       if (_source && highlightedFields.length > 0) {
         highlightedFields.forEach(field => {
           const text = _.get(_source, field)
-          highlight[field] = doHighlight(text)
+          highlight[field] = Array.isArray(text)
+            ? text.map(t => highlightText(
+              queryTokens, 
+              t, 
+              analyzer, 
+              tokenizer,
+              optionsValid.highlightTags[0],
+              optionsValid.highlightTags[1],
+            ))
+              : highlightText(
+                queryTokens,
+                text,
+              analyzer, 
+              tokenizer,
+              optionsValid.highlightTags[0],
+              optionsValid.highlightTags[1],
+              )
         })
 
         hit.highlight = highlight
       }
-
-      // if (_source && snippetFields.length > 0) {
-      //   const doSnippet = (text: string, windowSize = 30): string | string[] => {
-      //     if (Array.isArray(text)) {
-      //       return text.map(doSnippet) as string[]
-      //     }
-
-
-      //   }
-      //   let hl = hit.highlight ? hit.highlight : doHighlight(_.get(_source, field))
 
       hits.push(hit)
     }

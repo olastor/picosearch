@@ -2,6 +2,7 @@
 import { 
   QueryOptions,
   TextAnalyzer,
+  TextTokenizer,
   TextFieldIndex
 } from './interfaces'
 
@@ -12,14 +13,15 @@ import DateField from './fields/date'
 
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
+export const DEFAULT_TOKENIZER: TextTokenizer = (text: string): string[] => {
+  const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
+  return tokens
+}
 /** 
   * The default search options. See interface for documentation of default values.
   */
-export const DEFAULT_ANALYZER: TextAnalyzer = (text: string = '') => {
-  const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
-  return tokens
-    .map(token => token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase())
-    .filter(token => token)
+export const DEFAULT_ANALYZER: TextAnalyzer = (token: string = '') => {
+  return token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase()
 }
 
 export const DEFAULT_QUERY_OPTIONS: QueryOptions = {
