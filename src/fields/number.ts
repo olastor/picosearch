@@ -38,7 +38,7 @@ export default class NumberField {
     fieldIndex: NumberFieldIndex,
     documentId: number
   ): void {
-    let toDelete: number[] = []
+    const toDelete: number[] = []
 
     fieldIndex.forEach(([value, docIds], i) => {
       const foundIndex = docIds.findIndex(x => x === documentId)

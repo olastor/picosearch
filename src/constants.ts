@@ -11,16 +11,18 @@ import NumberField from './fields/number'
 import TextField from './fields/text'
 import DateField from './fields/date'
 
+// eslint-disable-next-line
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
 export const DEFAULT_TOKENIZER: TextTokenizer = (text: string): string[] => {
+  // eslint-disable-next-line
   const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
   return tokens
 }
 /** 
   * The default search options. See interface for documentation of default values.
   */
-export const DEFAULT_ANALYZER: TextAnalyzer = (token: string = '') => {
+export const DEFAULT_ANALYZER: TextAnalyzer = (token = '') => {
   return token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase()
 }
 
