@@ -33,7 +33,7 @@ export const scoreBM25F = (
     const dlTilde: { [doc: string]: number } = {}
     const tfTilde: { [doc: string]: number } = {}
 
-    let docIds = new Set<number>()
+    const docIds = new Set<number>()
     let df = 0
     fields.forEach(field => {
       const textIndex = index.fields[field] as TextFieldIndex

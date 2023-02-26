@@ -166,12 +166,12 @@ export const searchIndex = async (
     filteredDocumentIds = evaluateFilter(index, optionsValid.filter)
   }
 
-  let highlightedFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
+  const highlightedFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
     .filter(([field, opts]) => opts.highlight)
     .map(([field]) => field)
 
   if (query) {
-    let queryTokens = preprocessText(query, analyzer, tokenizer)
+    const queryTokens = preprocessText(query, analyzer, tokenizer)
     const textFields = Object.keys(optionsValid.queryFields as QueryField)
 
     if (optionsValid.fuzziness.maxError) {
@@ -219,7 +219,7 @@ export const searchIndex = async (
 
     for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
       let _source: any = null
-      let highlight: { [key: string]: string | string[] } = {}
+      const highlight: { [key: string]: string | string[] } = {}
 
       if (optionsValid.getDocument) {
         _source = await optionsValid.getDocument(index.originalIds[docId])

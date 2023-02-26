@@ -10,7 +10,7 @@ export const trieInsert = <T>(
   let node = root
   for (const c of chars) {
     if (!node.c[c]) {
-      let newNode: TrieNode<T> = { c: {}, items: [] }
+      const newNode: TrieNode<T> = { c: {}, items: [] }
       node.c[c] = newNode
       node = newNode
     } else {
