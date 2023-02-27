@@ -37,12 +37,12 @@ const calculateNdcg10 = (queryId: any, qrels: any, hits: any) => {
 }
 
 const evaluateDataset = async (name: string, options: any) => {
-  const corpus = fs.readFileSync(path.join(__dirname, `testdata/${name}/corpus.jsonl`), 'utf-8')
+  const corpus = fs.readFileSync(path.join(__dirname, `testdata/benchmark/${name}/corpus.jsonl`), 'utf-8')
     .split('\n')
     .filter(s => s)
     .map(s => JSON.parse(s))
 
-  const queries = fs.readFileSync(path.join(__dirname, `testdata/${name}/queries.jsonl`), 'utf-8')
+  const queries = fs.readFileSync(path.join(__dirname, `testdata/benchmark/${name}/queries.jsonl`), 'utf-8')
     .split('\n')
     .filter(s => s)
     .map(s => JSON.parse(s))
