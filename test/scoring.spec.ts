@@ -4,20 +4,24 @@ import {
   searchIndex,
   DEFAULT_QUERY_OPTIONS
 } from '../src/'
+
 import * as fs from 'fs'
 import * as path from 'path'
 
 const porterStemmer = require('porter-stemmer')
 const { eng } = require('stopword')
 
+
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
-const analyzer = (text: string): string[] => {
-  const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
-  return tokens
-    .map(token => token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase())
-    .map(token => porterStemmer.stemmer(token))
-    .filter(token => token && !eng.includes(token))
+export const analyzer = (token: string): string => {
+  let newToken = token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase()
+
+  if (eng.includes(newToken)) {
+    return ''
+  }
+
+  return porterStemmer.stemmer(newToken)
 }
 
 const calculateNdcg10 = (queryId: any, qrels: any, hits: any) => {
@@ -44,7 +48,7 @@ const evaluateDataset = async (name: string, options: any) => {
     .map(s => JSON.parse(s))
 
   let qrels: { [key: string]: { [key: string]: number } } = {}
-  fs.readFileSync(path.join(__dirname, `testdata/${name}/qrels/test.tsv`), 'utf-8')
+  fs.readFileSync(path.join(__dirname, `testdata/benchmark/${name}/qrels/test.tsv`), 'utf-8')
     .split('\n')
     .slice(1)
     .filter(s => s)
@@ -82,6 +86,8 @@ const evaluateDataset = async (name: string, options: any) => {
   return avgNdcg10
 }
 
+const CORPORA = ['scifact', 'nfcorpus', 'scidocs']
+
 describe('Benchmark', () => {
   test('should exceed minimum expected benchmark scores', async () => {
     const options = {
@@ -94,15 +100,13 @@ describe('Benchmark', () => {
       }
     }
 
-    // const corpora = ['scifact', 'nfcorpus', 'scidocs']
-    const corpora = ['scifact', 'nfcorpus']
     const minScores: { [key: string]: number } = {
       scifact: 0.681,
       nfcorpus: 0.326,
       scidocs: 0.153
     }
 
-    for (const corpus of corpora) {
+    for (const corpus of CORPORA) {
       const avgNdcg10 = await evaluateDataset(corpus, options)
       console.log(avgNdcg10)
       expect(minScores[corpus] < avgNdcg10).toEqual(true)

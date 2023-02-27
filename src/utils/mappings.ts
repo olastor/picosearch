@@ -23,6 +23,7 @@ export const validateMappings = (
         }
 
         mappings[path] = value as MappingType
+        continue
       }
 
       if (Array.isArray(value)) {
@@ -30,7 +31,8 @@ export const validateMappings = (
       }
 
       if (typeof value === 'object') {
-        return flatten(value, [...currentPath, key])
+        flatten(value, [...currentPath, key])
+        continue
       }
 
       const path = [...currentPath, key].join('.')
