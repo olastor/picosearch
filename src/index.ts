@@ -41,10 +41,10 @@ import { validateOptions } from './utils/options'
  *
  * @returns A JSON-serializable object containing the search index to be used for subsequent queries. The raw documents are **not included** in the index and the provided `docs` array must be present without modificaton at query time. Depending on the size of the text corpus, the size of the index can very.
  */
-export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
+export const createIndex = (mapping: SearchIndexMapping): SearchIndex => {
   const index: SearchIndex = {
     length: 0,
-    mappings,
+    mapping,
     fields: {},
     internalIds: {},
     originalIds: {}
@@ -83,7 +83,7 @@ export const indexDocument = (
   for (const [field, value] of Object.entries(doc)) {
     if (field === '_id') continue
 
-    const type = index.mappings[field]      
+    const type = index.mapping[field]      
 
     if (type === 'text') {
       if (!index.fields[field]) {

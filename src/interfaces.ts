@@ -86,7 +86,7 @@ export interface SearchIndexMapping {
 
 export interface SearchIndex {
   length: number;
-  mappings: SearchIndexMapping; 
+  mapping: SearchIndexMapping; 
   internalIds: {
     [originalId: string]: number
   },
