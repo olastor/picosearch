@@ -30,7 +30,7 @@ export const evaluateFilter = (
     operands = filter.map(f => evaluateFilter(index, f)) 
   } else if (typeof filter === 'object') {
     for (const [key, value] of Object.entries(filter)) {
-      const fieldMappingType: string = index.mapping[key]
+      const fieldMappingType: string = index.mappings[key]
 
       if (fieldMappingType) {
         operands.push(FIELD_CLASSES[fieldMappingType].filterDocuments(index.fields[key], value))

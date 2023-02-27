@@ -106,7 +106,7 @@ export const validateOptions = (
       throw new Error('Option "queryFields" must be an array of strings or an object.')
     }
 
-    const unknownField = (queryFields as string[]).find(field => index.mapping[field] !== 'text')
+    const unknownField = (queryFields as string[]).find(field => index.mappings[field] !== 'text')
     if (unknownField) {
       throw new Error(`Option "queryFields" contains unknown text field "${unknownField}".`)
     }
@@ -121,7 +121,7 @@ export const validateOptions = (
       )
   } else if (typeof queryFields === 'object') {
     Object.entries(queryFields as object).forEach(([field, fieldOpts]: [string, any]) => {
-      if (index.mapping[field] !== 'text') {
+      if (index.mappings[field] !== 'text') {
         throw new Error(`Option "queryFields" contains unknown text field "${field}".`)
       }
 
@@ -162,7 +162,7 @@ export const validateOptions = (
       } 
     })
   } else if (!queryFields) {
-    validatedOptions.queryFields = Object.entries(index.mapping)
+    validatedOptions.queryFields = Object.entries(index.mappings)
       .filter(([field, type]) => type === 'text')
       .reduce(
         (acc, [field]) => {
