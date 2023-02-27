@@ -1,12 +1,12 @@
 import { 
   SearchResults,
-  SearchIndex,
-  SearchIndexMapping,
+  Index,
+  Mappings,
   TextFieldIndex,
   NumberFieldIndex,
   KeywordFieldIndex,
-  TextAnalyzer,
-  TextTokenizer,
+  Analyzer,
+  Tokenizer,
   QueryOptions,
   SearchResultsHit,
   QueryField
@@ -30,6 +30,7 @@ import { evaluateFilter } from './utils/filter'
 import { trieFuzzySearch } from './utils/trie'
 import { highlightText } from './utils/highlight'
 import { validateOptions } from './utils/options'
+import { validateMappings } from './utils/mappings'
 
 
 
@@ -41,10 +42,10 @@ import { validateOptions } from './utils/options'
  *
  * @returns A JSON-serializable object containing the search index to be used for subsequent queries. The raw documents are **not included** in the index and the provided `docs` array must be present without modificaton at query time. Depending on the size of the text corpus, the size of the index can very.
  */
-export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
-  const index: SearchIndex = {
+export const createIndex = (mappings: Mappings): Index => {
+  const index: Index = {
     length: 0,
-    mappings,
+    mappings: validateMappings(mappings),
     fields: {},
     internalIds: {},
     originalIds: {}
@@ -54,10 +55,10 @@ export const createIndex = (mappings: SearchIndexMapping): SearchIndex => {
 }
 
 export const indexDocument = (
-  index: SearchIndex,
+  index: Index,
   doc: { [key: string]: any },
-  analyzer: TextAnalyzer = DEFAULT_ANALYZER,
-  tokenizer: TextTokenizer = DEFAULT_TOKENIZER
+  analyzer: Analyzer = DEFAULT_ANALYZER,
+  tokenizer: Tokenizer = DEFAULT_TOKENIZER
 ) => {
   if (!(
     typeof doc._id === 'string' && doc._id.length > 0 ||
@@ -124,7 +125,7 @@ export const indexDocument = (
 }
 
 export const removeDocument = (
-  index: SearchIndex,
+  index: Index,
   doc: { [key: string]: any }
 ) => {
   const internalId = index.internalIds[doc._id]
@@ -152,11 +153,11 @@ export const removeDocument = (
  * @returns Returns an array of matches sorted by scores descending (starting with the most relevant item).
  */
 export const searchIndex = async (
-  index: SearchIndex,
+  index: Index,
   query: string,
   options: Partial<QueryOptions>,
-  analyzer: TextAnalyzer = DEFAULT_ANALYZER,
-  tokenizer: TextTokenizer = DEFAULT_TOKENIZER
+  analyzer: Analyzer = DEFAULT_ANALYZER,
+  tokenizer: Tokenizer = DEFAULT_TOKENIZER
 ): Promise<SearchResults> => {
   // const analyzer = checkSearchOptions(options)
   const optionsValid: QueryOptions = validateOptions(index, options)

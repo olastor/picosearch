@@ -9,16 +9,16 @@ export const trieInsert = <T>(
   const chars = sequence.split('')
   let node = root
   for (const c of chars) {
-    if (!node.c[c]) {
-      const newNode: TrieNode<T> = { c: {}, items: [] }
-      node.c[c] = newNode
+    if (!node._c[c]) {
+      const newNode: TrieNode<T> = { _c: {}, _d: [] }
+      node._c[c] = newNode
       node = newNode
     } else {
-      node = node.c[c]
+      node = node._c[c]
     }
   }
 
-  node.items.push(item)
+  node._d.push(item)
 }
 
 export const trieSearch = <T>(
@@ -29,14 +29,14 @@ export const trieSearch = <T>(
   const chars = sequence.split('')
   let node = root
   for (const c of chars) {
-    if (typeof node.c[c] === 'undefined') {
+    if (typeof node._c[c] === 'undefined') {
       return null
     } else {
-      node = node.c[c]
+      node = node._c[c]
     }
   }
 
-  return requireTerminal && node.items.length === 0 ? null : node
+  return requireTerminal && node._d.length === 0 ? null : node
 }
 
 export const trieDelete = <T>(
@@ -44,12 +44,12 @@ export const trieDelete = <T>(
   item: T,
   eql: (a: T, b: T) => boolean = (a, b) => a === b
 ): void => {
-  if (node.items && node.items.length > 0) {
-    node.items = node.items.filter(x => !eql(x, item))
+  if (node._d && node._d.length > 0) {
+    node._d = node._d.filter(x => !eql(x, item))
   }
 
-  if (node.c) {
-    Object.values(node.c).forEach(n => trieDelete(n, item, eql))
+  if (node._c) {
+    Object.values(node._c).forEach(n => trieDelete(n, item, eql))
   }
 }
 
@@ -79,14 +79,14 @@ export const trieFuzzySearch = <T>(
       return []
     }
 
-    if (Object.keys(currentNode.c).length === 0) {
-      return currentNode.items.length > 0 ? [[currentSequence, currentNode]] : []
+    if (Object.keys(currentNode._c).length === 0) {
+      return currentNode._d.length > 0 ? [[currentSequence, currentNode]] : []
     }
 
     if (charsLeft.length === 0) {
       return [
-        ...(currentNode.items.length > 0 ? [[currentSequence, currentNode] as [string, TrieNode<T>]] : []),
-        ...Object.entries(currentNode.c)
+        ...(currentNode._d.length > 0 ? [[currentSequence, currentNode] as [string, TrieNode<T>]] : []),
+        ...Object.entries(currentNode._c)
           .flatMap(([c, n]) => 
             recurse(n, currentDistance + 1, currentSequence + c, [])
           )
@@ -98,7 +98,7 @@ export const trieFuzzySearch = <T>(
       ...recurse(currentNode, currentDistance + 1, currentSequence, charsLeft.slice(1))
     ]
 
-    for (const [char, childNode] of Object.entries(currentNode.c)) {
+    for (const [char, childNode] of Object.entries(currentNode._c)) {
       if (char === charsLeft[0]) {
         results = results.concat(recurse(childNode, currentDistance, currentSequence + char, charsLeft.slice(1)))
       } else {

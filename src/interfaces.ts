@@ -1,13 +1,25 @@
 /** 
-  * Options for defining preprocessing steps and parameters for scoring
-  * that should be provided both at index and query time.
+  * The analyzer type is a function for applying preprocessing steps, such as
+  * stemming or lowercasing, to a single token.
   */
-export type TextAnalyzer = (token: string) => string
-export type TextTokenizer = (text: string) => string[]
+export type Analyzer = (token: string) => string
 
+/**
+  * The tokenizer type is a function that splits a text into tokens.
+  */
+export type Tokenizer = (text: string) => string[]
+
+/**
+  * The 'TrieNode' data structure is used to index text in a prefix-tree manner,
+  * for more efficient storage usage and fuzzy-search algorithms with better a
+  * better runtime than when using a simple map.
+  */
 export interface TrieNode<T> {
-  c: { [char: string]: TrieNode<T> }; // "children", saving some bytes by using "c"
-  items: T[];
+  /** Internal reference for the children of the current node. */
+  _c: { [char: string]: TrieNode<T> };
+
+  /** Internal reference for the data items of the current node. */
+  _d: T[];
 }
 
 export interface QueryField {
@@ -25,7 +37,7 @@ export interface QueryOptions {
   };
 
   filter?: {
-    [key: string]: any
+    [field: string]: any;
   };
 
   size: number;
@@ -80,13 +92,13 @@ export type NumberFieldIndex = [number, number[]][]
 export type KeywordFieldIndex = TrieNode<number>;
 export type MappingType = 'text' | 'keyword' | 'number' | 'date'
 
-export interface SearchIndexMapping {
+export interface Mappings {
  [field: string]: MappingType 
 }
 
-export interface SearchIndex {
+export interface Index {
   length: number;
-  mappings: SearchIndexMapping; 
+  mappings: Mappings; 
   internalIds: {
     [originalId: string]: number
   },

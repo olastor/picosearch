@@ -1,9 +1,9 @@
 import {
-  TextAnalyzer,
-  TextTokenizer
+  Analyzer,
+  Tokenizer
 } from '../interfaces'
 
-export const preprocessText = (text: string, analyzer: TextAnalyzer, tokenizer: TextTokenizer): string[] => {
+export const preprocessText = (text: string, analyzer: Analyzer, tokenizer: Tokenizer): string[] => {
   return tokenizer(text)
     .map(analyzer)
     .filter(t => t)

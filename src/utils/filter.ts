@@ -1,4 +1,4 @@
-import { SearchIndex } from '../interfaces'
+import { Index } from '../interfaces'
 import * as _ from './helper'
 import { FIELD_CLASSES } from '../constants'
 
@@ -20,7 +20,7 @@ import { FIELD_CLASSES } from '../constants'
   *
   */
 export const evaluateFilter = (
-  index: SearchIndex,
+  index: Index,
   filter: any, // TODO: interface?
   operator = '$and'
 ): number[] => {

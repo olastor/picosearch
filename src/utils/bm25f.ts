@@ -1,4 +1,4 @@
-import { SearchIndex, QueryOptions, QueryField, TextFieldIndex } from '../interfaces'
+import { Index, QueryOptions, QueryField, TextFieldIndex } from '../interfaces'
 import { trieSearch } from './trie'
 
 /**
@@ -12,7 +12,7 @@ import { trieSearch } from './trie'
   */
 export const scoreBM25F = (
   queryTokens: string[],
-  index: SearchIndex,
+  index: Index,
   validatedOptions: QueryOptions
 ): [number, number][] => {
   const docScores: { [doc: string]: number } = {}
@@ -42,7 +42,7 @@ export const scoreBM25F = (
         return
       }
 
-      node.items.forEach(([docId, freq]: [number, number]) => {
+      node._d.forEach(([docId, freq]: [number, number]) => {
         docIds.add(docId)
         tfTilde[docId] = (tfTilde[docId] || 0) + (queryFields[field].weight || 1) * freq
         dlTilde[docId] = (dlTilde[docId] || 0) + textIndex.docLengths[docId]

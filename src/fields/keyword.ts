@@ -3,7 +3,7 @@ import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/tr
 
 export default class KeywordField  {
   public static initialize(): KeywordFieldIndex {
-    return { c: {}, items: [] }
+    return { _c: {}, _d: [] }
   }
 
   public static indexDocument(
@@ -51,7 +51,7 @@ export default class KeywordField  {
         .flatMap(keyword => KeywordField.filterDocuments(fieldIndex, keyword)))]
     } else if (typeof filter === 'string') {
       const node = trieSearch<number>(fieldIndex, filter)
-      return node ? node.items : []
+      return node ? node._d : []
     } else {
       throw new Error(`Invalid value '${filter}' provided for filtering the field.`)
     }

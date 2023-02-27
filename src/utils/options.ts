@@ -1,8 +1,12 @@
 import { DEFAULT_QUERY_OPTIONS, DEFAULT_FIELD_OPTIONS } from '../constants'
-import { SearchIndex, QueryOptions } from '../interfaces'
+import { 
+  Index, 
+  QueryOptions,
+  Mappings
+} from '../interfaces'
 
 export const validateOptions = (
-  index: SearchIndex,
+  index: Index,
   options: Partial<QueryOptions>
 ): QueryOptions => {
   if (!options) {

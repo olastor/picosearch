@@ -1,8 +1,8 @@
 
 import { 
   QueryOptions,
-  TextAnalyzer,
-  TextTokenizer,
+  Analyzer,
+  Tokenizer,
   TextFieldIndex
 } from './interfaces'
 
@@ -14,7 +14,7 @@ import DateField from './fields/date'
 // eslint-disable-next-line
 const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
-export const DEFAULT_TOKENIZER: TextTokenizer = (text: string): string[] => {
+export const DEFAULT_TOKENIZER: Tokenizer = (text: string): string[] => {
   // eslint-disable-next-line
   const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
   return tokens
@@ -22,7 +22,7 @@ export const DEFAULT_TOKENIZER: TextTokenizer = (text: string): string[] => {
 /** 
   * The default search options. See interface for documentation of default values.
   */
-export const DEFAULT_ANALYZER: TextAnalyzer = (token = '') => {
+export const DEFAULT_ANALYZER: Analyzer = (token = '') => {
   return token.trim().replace(REGEXP_PATTERN_PUNCT, '').toLowerCase()
 }
 
@@ -48,8 +48,8 @@ export const DEFAULT_FIELD_OPTIONS = {
 
 export const EMPTY_TEXT_FIELD_INDEX: TextFieldIndex = {
   docFreqsByToken: {
-    c: {}, 
-    items: []
+    _c: {}, 
+    _d: []
   },
   docLengths: {},
   totalDocLengths: 0,

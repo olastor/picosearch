@@ -1,6 +1,6 @@
 import {
-  TextAnalyzer,
-  TextTokenizer,
+  Analyzer,
+  Tokenizer,
   TextFieldIndex
 } from '../interfaces'
 
@@ -11,8 +11,8 @@ export default class TextField  {
   public static initialize() {
     return  {
       docFreqsByToken: {
-        c: {},
-        items: []
+        _c: {},
+        _d: []
       },
       docLengths: {},
       totalDocLengths: 0,
@@ -24,13 +24,9 @@ export default class TextField  {
     fieldIndex: TextFieldIndex,
     documentId: number,
     documentFieldValue: string,
-    analyzer: TextAnalyzer,
-    tokenizer: TextTokenizer
+    analyzer: Analyzer,
+    tokenizer: Tokenizer
   ): void {
-    // if (typeof documentFieldValue !== 'string') {
-    //   throw new Error('Text must be a string!')
-    // }
-
     const tokens = Array.isArray(documentFieldValue)
       ? documentFieldValue.flatMap(text => preprocessText(text, analyzer, tokenizer))
       : preprocessText(documentFieldValue, analyzer, tokenizer)

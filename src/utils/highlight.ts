@@ -1,6 +1,6 @@
 import {
-  TextAnalyzer,
-  TextTokenizer
+  Analyzer,
+  Tokenizer
 } from '../interfaces'
 
 export const findRemovedPartsByTokenizer = (doc: string, docTokens: string[]): string[] => {
@@ -41,8 +41,8 @@ export const reconstructTokenizedDoc = (tokens: string[], gaps: string[]): strin
 export const highlightText = (
   queryTokens: string[], 
   doc: string,
-  analyzer: TextAnalyzer,
-  tokenizer: TextTokenizer,
+  analyzer: Analyzer,
+  tokenizer: Tokenizer,
   tagBefore = '<em>',
   tagAfter = '</em>'
 ): string => {
