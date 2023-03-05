@@ -18,6 +18,7 @@ export const validateOptions = (
     size, 
     fuzziness, 
     queryFields, 
+    snippetMinWindowSize,
     getDocument, 
     bm25,
     highlightTags,
@@ -41,9 +42,17 @@ export const validateOptions = (
   if (typeof size !== 'undefined' && (typeof size !== 'number' || size < 0)) {
     throw new Error('Option "size" must be a non-negative integer.')
   }
-  
+
   if (typeof size !== 'undefined') {
     validatedOptions.size = size
+  }
+
+  if (typeof snippetMinWindowSize !== 'undefined' && (typeof snippetMinWindowSize !== 'number' || snippetMinWindowSize < 0)) {
+    throw new Error('Option "snippetMinWindowSize" must be a non-negative integer.')
+  }
+
+  if (typeof snippetMinWindowSize !== 'undefined') {
+    validatedOptions.snippetMinWindowSize = snippetMinWindowSize
   }
 
   if (typeof offset !== 'undefined' && (typeof offset !== 'number' || offset < 0)) {

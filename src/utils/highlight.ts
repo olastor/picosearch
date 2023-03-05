@@ -10,7 +10,6 @@ const indexOfAll = (haystack: string, needle: string) => {
   const result = []
   do {
     found = haystack.slice(start).indexOf(needle)
-    console.log(haystack.slice(start))
     if (found > -1) {
       result.push(start + found)
       start = start + found + needle.length

@@ -46,6 +46,9 @@ export interface QueryOptions {
 
   highlightTags: [string, string];
 
+  /** The minimum window size to add context left or right to a snippet. */
+  snippetMinWindowSize: number;
+
   getDocument?: (documentId: string | number) => Promise<{ [key: string]: any } | null> | null;
   
   /** Object for specifying custom BM25 parameters. */
@@ -115,6 +118,7 @@ export interface SearchResultsHit {
   _score: number;
   _source?: { [key: string]: any } | null;
   highlight?: { [key: string]: string | string[] };
+  snippets?: { [key: string]: string[][] | string[] };
 }
 
 /** Data structure for a search result. */

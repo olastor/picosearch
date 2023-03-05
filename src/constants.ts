@@ -34,6 +34,7 @@ export const DEFAULT_QUERY_OPTIONS: QueryOptions = {
     prefixLength: 0
   },
   highlightTags: ['<em>', '</em>'],
+  snippetMinWindowSize: 17,
   bm25: {
     k1: 1.2,
     b: 0.75

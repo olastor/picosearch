@@ -29,6 +29,7 @@ import TextField from './fields/text'
 import { evaluateFilter } from './utils/filter'
 import { trieFuzzySearch } from './utils/trie'
 import { highlightText } from './utils/highlight'
+import { snippet } from './utils/snippet'
 import { validateOptions } from './utils/options'
 import { validateMappings } from './utils/mappings'
 
@@ -171,6 +172,10 @@ export const searchIndex = async (
     .filter(([field, opts]) => opts.highlight)
     .map(([field]) => field)
 
+  const snippetFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
+    .filter(([field, opts]) => opts.snippet)
+    .map(([field]) => field)
+
   if (query) {
     const queryTokens = preprocessText(query, analyzer, tokenizer)
     const textFields = Object.keys(optionsValid.queryFields as QueryField)
@@ -232,7 +237,7 @@ export const searchIndex = async (
         _source
       }
 
-      if (_source && highlightedFields.length > 0) {
+      if (_source && (highlightedFields.length > 0 || snippetFields.length > 0)) {
         highlightedFields.forEach(field => {
           const text = _.get(_source, field)
           highlight[field] = Array.isArray(text)
@@ -254,7 +259,30 @@ export const searchIndex = async (
               )
         })
 
-        hit.highlight = highlight
+        if (highlightedFields.length > 0) {
+          hit.highlight = highlight
+        }
+
+        if (snippetFields.length > 0) {
+          hit.snippets = {}
+          for (const [field, hled] of Object.entries(highlight)) {
+            if (Array.isArray(hled)) {
+              hit.snippets[field] = hled.map(hl => snippet(
+                hl,
+                optionsValid.highlightTags[0],
+                optionsValid.highlightTags[1],
+                optionsValid.snippetMinWindowSize
+              ))
+            } else {
+              hit.snippets[field] = snippet(
+                hled,
+                optionsValid.highlightTags[0],
+                optionsValid.highlightTags[1],
+                optionsValid.snippetMinWindowSize
+              )
+            }
+          }
+        }
       }
 
       hits.push(hit)

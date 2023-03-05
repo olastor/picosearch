@@ -30,7 +30,7 @@ describe('highlight', () => {
     ).toEqual('This is a document.')
   })
 
-  it('should return same text if no highlights', () => {
+  it('should highlighted text', () => {
     expect(
       highlightText(
         preprocess('Where are my keys?'),
@@ -38,6 +38,6 @@ describe('highlight', () => {
         analyzer,
         DEFAULT_TOKENIZER
       )
-    ).toEqual('This is a document.')
+    ).toEqual('The <b>keys</b> are where the <b>key</b> is, that is, in the <b>key</b>-place.')
   })
 })
