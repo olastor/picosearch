@@ -8,7 +8,7 @@ export const validateMappings = (
     throw new Error('Mappings must be an object!')
   }
 
-  let mappings: Mappings = {}
+  const mappings: Mappings = {}
 
   const flatten = (
     obj: { [key: string]: any },

@@ -1,4 +1,4 @@
-const findIndex = (haystack: string, needle: string, start: number = 0): number => {
+const findIndex = (haystack: string, needle: string, start = 0): number => {
   const skipped = haystack.slice(start)
   const found = skipped.indexOf(needle)
   return found < 0 ? found : start + found
@@ -13,6 +13,8 @@ export const snippet = (
   let leftIndex = 0
   let rightIndex = 0
   const snippets = ['']
+
+  // eslint-disable-next-line
   while (true) {
     const tagBeforeIndex = findIndex(highlightedText, tagBefore, rightIndex)
     if (tagBeforeIndex < 0) {
