@@ -12,7 +12,7 @@ import TextField from './fields/text'
 import DateField from './fields/date'
 
 // eslint-disable-next-line
-const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
+export const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
 export const DEFAULT_TOKENIZER: Tokenizer = (text: string): string[] => {
   // eslint-disable-next-line

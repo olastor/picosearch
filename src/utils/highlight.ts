@@ -2,29 +2,21 @@ import {
   Analyzer,
   Tokenizer
 } from '../interfaces'
+import * as _ from './helper'
 
-export const findRemovedPartsByTokenizer = (doc: string, docTokens: string[]): string[] => {
-  let currentIndex = 0
-
-  const gaps = []
-  docTokens.forEach(token => {
-    const foundIndex = doc.indexOf(token, currentIndex)
-    gaps.push(doc.slice(currentIndex, foundIndex))
-    currentIndex = foundIndex + token.length
-  })
-
-  gaps.push(doc.slice(currentIndex, doc.length))
-
-  return gaps
-}
-
-export const reconstructTokenizedDoc = (tokens: string[], gaps: string[]): string => {
-  let doc = gaps[0]
-  tokens.forEach((token, i) => {
-    doc += token
-    doc += gaps[i + 1]
-  })
-  return doc
+const indexOfAll = (haystack: string, needle: string) => {
+  let start = 0
+  let found = -1
+  const result = []
+  do {
+    found = haystack.slice(start).indexOf(needle)
+    console.log(haystack.slice(start))
+    if (found > -1) {
+      result.push(start + found)
+      start = start + found + needle.length
+    }
+  } while (found > -1)
+  return result
 }
 
 /**
@@ -43,14 +35,58 @@ export const highlightText = (
   doc: string,
   analyzer: Analyzer,
   tokenizer: Tokenizer,
-  tagBefore = '<em>',
-  tagAfter = '</em>'
+  tagBefore = '<b>',
+  tagAfter = '</b>'
 ): string => {
   const docTokensRaw = tokenizer(doc)
-  const tokenizerGaps = findRemovedPartsByTokenizer(doc, docTokensRaw)
-  const docTokensHighlighted = docTokensRaw.map(token => queryTokens.includes(analyzer(token))
-    ? `${tagBefore}${token}${tagAfter}`
-    : token
+  const docTokensAnalyzed = docTokensRaw
+    .map(analyzer)
+
+  let highlighted = doc
+
+  const tokensToHighlight = [...new Set(_.intersection([docTokensAnalyzed, queryTokens]))]
+  const tokensRawToHighlight = [...new Set(
+    docTokensAnalyzed.map((token, i) => {
+      const index = tokensToHighlight.indexOf(token)
+      return index > -1 ? docTokensRaw[i] : ''
+    }).filter(s => s)
+  )].sort((a, b) => b.length - a.length)
+
+
+  // TODO: this could be optimized for better performance
+
+
+  // find substrings among the raw tokens to highlight to make sure to
+  // later always only replace the most commont "supertoken" if possible
+  const substrings: { [key: string]: string[] } = {}
+  tokensRawToHighlight.forEach((token, i) => 
+    tokensRawToHighlight
+      .slice(i + 1)
+      .filter(token2 => token.indexOf(token2) > -1)
+      .forEach(token2 => substrings[token] = [...(substrings[token] || []), token2])
   )
-  return reconstructTokenizedDoc(docTokensHighlighted, tokenizerGaps)
+
+  // find occurrences of tokens in doc
+  const replaceIndices: { [key: string]: number[] } = {}
+  tokensRawToHighlight
+    .forEach(token => replaceIndices[token] = [...(replaceIndices[token] || []), ...indexOfAll(doc, token)])
+
+  // remove occurrences that have a supertoken
+  Object.entries(substrings).forEach(([token, subTokens]) => subTokens.forEach(subToken => {
+    const subTokenIndex = token.indexOf(subToken)
+    replaceIndices[subToken] = (replaceIndices[subToken] || []).filter(i => 
+      !replaceIndices[token].includes(i - subTokenIndex)
+    )
+  }))
+
+  // wrap occurrences with tag
+  Object.entries(replaceIndices)
+    .flatMap(([token, indices]) => indices.map(i => ([token, i])))
+    // sort reversed by index to start replacing in order that preserves indices of next replacements
+    .sort((a: any, b: any) => b[1] - a[1]) 
+    .forEach(([token, i]: any) => 
+      highlighted = highlighted.slice(0, i) + tagBefore + token + tagAfter + highlighted.slice(i + token.length)
+    )
+
+  return highlighted
 }
