@@ -1,3 +1,4 @@
+// 
 export const get = (obj: object, path: string, defaultValue = undefined) => {
   const travel = (regexp: any) =>
     String.prototype.split
@@ -18,4 +19,4 @@ export const union = (arrays: any[][]): any[] => [...new Set(arrays.flatMap(a =>
 
 export const randomInt = (max: number = Number.MAX_SAFE_INTEGER) => Math.floor(Math.random() * max)
 
-export const cloneDeep = (obj: any) => JSON.parse(JSON.stringify(obj))
+export const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

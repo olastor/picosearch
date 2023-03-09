@@ -10,6 +10,8 @@ export const snippet = (
   tagAfter = '</em>',
   minWindowSize = 100
 ): string[] => {
+  if  (!highlightedText) return []
+
   let leftIndex = 0
   let rightIndex = 0
   const snippets = ['']

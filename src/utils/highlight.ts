@@ -41,51 +41,20 @@ export const highlightText = (
   const docTokensAnalyzed = docTokensRaw
     .map(analyzer)
 
-  let highlighted = doc
-
   const tokensToHighlight = [...new Set(_.intersection([docTokensAnalyzed, queryTokens]))]
   const tokensRawToHighlight = [...new Set(
     docTokensAnalyzed.map((token, i) => {
       const index = tokensToHighlight.indexOf(token)
       return index > -1 ? docTokensRaw[i] : ''
     }).filter(s => s)
-  )].sort((a, b) => b.length - a.length)
+  )].sort()
 
+  if (tokensRawToHighlight.length === 0) {
+    return doc
+  }
 
-  // TODO: this could be optimized for better performance
-
-
-  // find substrings among the raw tokens to highlight to make sure to
-  // later always only replace the most commont "supertoken" if possible
-  const substrings: { [key: string]: string[] } = {}
-  tokensRawToHighlight.forEach((token, i) => 
-    tokensRawToHighlight
-      .slice(i + 1)
-      .filter(token2 => token.indexOf(token2) > -1)
-      .forEach(token2 => substrings[token] = [...(substrings[token] || []), token2])
+  const reHighlight = new RegExp(`\\b(${tokensRawToHighlight.map(s => _.escapeRegExp(s)).join('|')})\\b`, 'g')
+  return doc.replace(reHighlight, (word: string) => 
+    `${tagBefore}${word}${tagAfter}`.replace(/\$/g, '$$$$')
   )
-
-  // find occurrences of tokens in doc
-  const replaceIndices: { [key: string]: number[] } = {}
-  tokensRawToHighlight
-    .forEach(token => replaceIndices[token] = [...(replaceIndices[token] || []), ...indexOfAll(doc, token)])
-
-  // remove occurrences that have a supertoken
-  Object.entries(substrings).forEach(([token, subTokens]) => subTokens.forEach(subToken => {
-    const subTokenIndex = token.indexOf(subToken)
-    replaceIndices[subToken] = (replaceIndices[subToken] || []).filter(i => 
-      !replaceIndices[token].includes(i - subTokenIndex)
-    )
-  }))
-
-  // wrap occurrences with tag
-  Object.entries(replaceIndices)
-    .flatMap(([token, indices]) => indices.map(i => ([token, i])))
-    // sort reversed by index to start replacing in order that preserves indices of next replacements
-    .sort((a: any, b: any) => b[1] - a[1]) 
-    .forEach(([token, i]: any) => 
-      highlighted = highlighted.slice(0, i) + tagBefore + token + tagAfter + highlighted.slice(i + token.length)
-    )
-
-  return highlighted
 }

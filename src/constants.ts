@@ -15,6 +15,10 @@ import DateField from './fields/date'
 export const REGEXP_PATTERN_PUNCT = new RegExp("['!\"“”#$%&\\'()\*+,\-\.\/:;<=>?@\[\\\]\^_`{|}~']", 'g')
 
 export const DEFAULT_TOKENIZER: Tokenizer = (text: string): string[] => {
+  if (typeof text !== 'string') {
+    return []
+  }
+
   // eslint-disable-next-line
   const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
   return tokens
