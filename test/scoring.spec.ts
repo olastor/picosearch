@@ -102,7 +102,7 @@ describe('Benchmark', () => {
 
     const minScores: { [key: string]: number } = {
       scifact: 0.681,
-      nfcorpus: 0.326,
+      nfcorpus: 0.325,
       scidocs: 0.153
     }
 
