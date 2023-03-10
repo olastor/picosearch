@@ -1,4 +1,4 @@
-import { NumberField } from '../../src/fields/number'
+import NumberField from '../../src/fields/number'
 import * as _ from '../../src/utils/helper'
 import { test, fc } from '@fast-check/jest';
 
