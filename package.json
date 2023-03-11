@@ -1,6 +1,6 @@
 {
   "name": "picosearch",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Tiny, customizable module for creating basic full-text search indices and queries using the BM25F algorithm.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
