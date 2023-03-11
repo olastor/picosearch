@@ -221,15 +221,22 @@ export const searchIndex = async (
       ranked = ranked.filter(([docId]) => (filteredDocumentIds as number[]).includes(docId))
     }
 
-    const hits = []
+    const hits: SearchResultsHit[] = []
 
-    for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
-      let _source: any = null
-      const highlight: { [key: string]: string | string[] } = {}
+    const sourcePromises = []
 
-      if (optionsValid.getDocument) {
-        _source = await optionsValid.getDocument(index.originalIds[docId])
+    if (optionsValid.getDocument) {
+      for (const [docId] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
+        sourcePromises.push(optionsValid.getDocument(index.originalIds[docId]))
       }
+    }
+
+    const sources = await Promise.all(sourcePromises)
+
+    let i = 0
+    for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
+      const _source: any = optionsValid.getDocument ? sources[i] : null
+      const highlight: { [key: string]: string | string[] } = {}
 
       const hit: SearchResultsHit = {
         _id: index.originalIds[docId],
@@ -286,7 +293,9 @@ export const searchIndex = async (
       }
 
       hits.push(hit)
+      i++
     }
+
 
     return {
       total: ranked.length,
