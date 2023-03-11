@@ -72,9 +72,9 @@ export const indexDocument = (
     throw new Error('Duplicate ID')
   }
 
-  let internalId
+  let internalId = index.length
   do {
-    internalId = _.randomInt()
+    internalId++
   } while (index.internalIds[internalId])
 
   index.internalIds[doc._id] = internalId
