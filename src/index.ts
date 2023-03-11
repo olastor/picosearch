@@ -177,7 +177,7 @@ export const searchIndex = async (
     .map(([field]) => field)
 
   if (query) {
-    const queryTokens = preprocessText(query, analyzer, tokenizer)
+    let queryTokens = preprocessText(query, analyzer, tokenizer)
     const textFields = Object.keys(optionsValid.queryFields as QueryField)
 
     if (optionsValid.fuzziness.maxError) {
@@ -208,6 +208,15 @@ export const searchIndex = async (
         maxScore: 0,
         hits: []
       }
+    }
+
+    if (optionsValid.synonyms) {
+      queryTokens = [
+        ...queryTokens,
+        ...Object.entries(optionsValid.synonyms)
+          .filter(([token]) => queryTokens.includes(token))
+          .flatMap(([token, syns]) => syns)
+      ]
     }
 
     let ranked = scoreBM25F(

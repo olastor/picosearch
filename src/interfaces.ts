@@ -46,6 +46,8 @@ export interface QueryOptions {
 
   highlightTags: [string, string];
 
+  synonyms?: { [token: string]: string[] };
+
   /** The minimum window size to add context left or right to a snippet. */
   snippetMinWindowSize: number;
 

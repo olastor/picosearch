@@ -23,6 +23,7 @@ export const validateOptions = (
     bm25,
     highlightTags,
     filter,
+    synonyms,
     ...otherProps
   } = options
 
@@ -37,6 +38,10 @@ export const validateOptions = (
   if (filter) {
     // TODO: validate more
     validatedOptions.filter = filter
+  }
+
+  if (synonyms) {
+    validatedOptions.synonyms = synonyms
   }
 
   if (typeof size !== 'undefined' && (typeof size !== 'number' || size < 0)) {
