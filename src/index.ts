@@ -33,8 +33,6 @@ import { snippet } from './utils/snippet'
 import { validateOptions } from './utils/options'
 import { validateMappings } from './utils/mappings'
 
-
-
 /**
  * Function for building a search index that later can be used for querying.
  *

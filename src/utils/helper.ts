@@ -1,4 +1,4 @@
-// 
+// https://github.com/you-dont-need/You-Dont-Need-Lodash-Underscore#_get
 export const get = (obj: object, path: string, defaultValue = undefined) => {
   const travel = (regexp: any) =>
     String.prototype.split

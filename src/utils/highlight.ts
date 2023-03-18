@@ -4,20 +4,6 @@ import {
 } from '../interfaces'
 import * as _ from './helper'
 
-const indexOfAll = (haystack: string, needle: string) => {
-  let start = 0
-  let found = -1
-  const result = []
-  do {
-    found = haystack.slice(start).indexOf(needle)
-    if (found > -1) {
-      result.push(start + found)
-      start = start + found + needle.length
-    }
-  } while (found > -1)
-  return result
-}
-
 /**
  * Function highlighting matching words in documents for a query.
  *

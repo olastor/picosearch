@@ -39,6 +39,9 @@ export const trieSearch = <T>(
   return requireTerminal && node._d.length === 0 ? null : node
 }
 
+/**
+ * Recursively delete a specific item from the whole tree.
+ */ 
 export const trieDelete = <T>(
   node: TrieNode<T>, 
   item: T,
@@ -49,7 +52,8 @@ export const trieDelete = <T>(
   }
 
   if (node._c) {
-    Object.values(node._c).forEach(n => trieDelete(n, item, eql))
+    Object.values(node._c)
+      .forEach(n => trieDelete(n, item, eql))
   }
 }
 

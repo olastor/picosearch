@@ -1,11 +1,11 @@
 /** 
-  * The analyzer type is a function for applying preprocessing steps, such as
+  * The analyzer is a function for applying preprocessing steps, such as
   * stemming or lowercasing, to a single token.
   */
 export type Analyzer = (token: string) => string
 
 /**
-  * The tokenizer type is a function that splits a text into tokens.
+  * The tokenizer is a function that splits a text into its tokens.
   */
 export type Tokenizer = (text: string) => string[]
 
@@ -22,30 +22,49 @@ export interface TrieNode<T> {
   _d: T[];
 }
 
+/**
+  * A query field describes options specific to one field
+  * in the mapping when querying.
+  */
 export interface QueryField {
+  /** The weight of this field. Values lower than 1 will decrease importance, values above 1 introduce a boosting. */
   weight?: number,
+
+  /** Whether or not to highlight matching words for this field. */
   highlight?: boolean,
+
+  /** Whether or not to include snippets (small text pieces that are matching one of the query words) for this field in the results. Snippets are always highlighted, as well. */
   snippet?: boolean
 }
 
 export interface QueryOptions {
+  /** A list of text fields to use for searching or an object specifying more specific options for each field using the QueryField options. */
   queryFields?: string[] | { [field: string]: QueryField };
 
+  /** Options for fuzziness. */
   fuzziness: {
+    /** The maximum Levenshtein/Edit distance allowed to include similar tokens. */
     maxError: number;
+
+    /** The length of a prefix that is excluded from fuzzy matching and must be the same as the matching query token. */
     prefixLength: number;
   };
 
+  /** Filters to exclude/include specific documents based on fields that are not of type 'text'. */
   filter?: {
     [field: string]: any;
   };
 
+  /** The number of hits to return. */
   size: number;
 
+  /** The number of hits to skip before returning, e.g. for doing pagination. */
   offset: number;
 
+  /** The opening/closing tags to use for highlighting. Default: ['<b>', '</b>'] */
   highlightTags: [string, string];
 
+  /** A mapping of synonyms of analyzed tokens. */
   synonyms?: { [token: string]: string[] };
 
   /** The minimum window size to add context left or right to a snippet. */

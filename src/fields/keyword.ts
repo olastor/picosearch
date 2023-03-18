@@ -19,13 +19,11 @@ export default class KeywordField  {
     trieInsert<number>(fieldIndex, documentId, documentFieldValue)
   }
 
-  // slow
   public static removeDocument(
     fieldIndex: KeywordFieldIndex,
     documentId: number
   ): void {
-    // TODO
-    // trieDelete(fieldIndex, documentId)
+    trieDelete(fieldIndex, documentId)
   }
 
   public static updateDocument(
