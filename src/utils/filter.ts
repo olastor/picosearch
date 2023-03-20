@@ -57,9 +57,14 @@ export const evaluateFilter = (
   }
 
   if (operator === '$not') {
+    const internalIds = []
+    for (let i = index.internalIds.min; i <= index.internalIds.max; i++) {
+      if (index.internalIds.missing.includes(i)) continue
+      internalIds.push(i)
+    }
+
     const union = _.union(operands)
-    return Object.values(index.internalIds)
-      .filter(id => !union.includes(id))
+    return internalIds.filter(id => !union.includes(id))
   }
 
   throw new Error('Invalid filter.')

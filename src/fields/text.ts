@@ -63,14 +63,14 @@ export default class TextField  {
     // fieldIndex.docCount -= 1
   }
 
-  // public static updateDocument(
-  //   fieldIndex: TextFieldIndex,
-  //   options: SearchOptions,
-  //   documentId: number,
-  //   documentFieldValue: string
-  // ): void {
-  //   this.removeDocument(fieldIndex, documentId)
-  //   this.indexDocument(fieldIndex, options, documentId, documentFieldValue)
-  // }
-  //
+  public static updateDocument(
+    fieldIndex: TextFieldIndex,
+    documentId: number,
+    documentFieldValue: string,
+    analyzer: Analyzer,
+    tokenizer: Tokenizer
+  ): void {
+    this.removeDocument(fieldIndex, documentId)
+    this.indexDocument(fieldIndex, documentId, documentFieldValue, analyzer, tokenizer)
+  }
 }

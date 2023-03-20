@@ -23,6 +23,15 @@ export interface TrieNode<T> {
 }
 
 /**
+  * Data structur for a range of integers with potentially missing numbers.
+  */
+export type CompactRange = {
+  min: number,
+  max: number,
+  missing: number[]
+}
+
+/**
   * A query field describes options specific to one field
   * in the mapping when querying.
   */
@@ -70,7 +79,7 @@ export interface QueryOptions {
   /** The minimum window size to add context left or right to a snippet. */
   snippetMinWindowSize: number;
 
-  getDocument?: (documentId: string | number) => Promise<{ [key: string]: any } | null> | null;
+  getDocument?: (documentId: string) => Promise<{ [key: string]: any } | null> | null;
   
   /** Object for specifying custom BM25 parameters. */
   bm25: {
@@ -123,19 +132,15 @@ export interface Mappings {
 export interface Index {
   length: number;
   mappings: Mappings; 
-  internalIds: {
-    [originalId: string]: number
-  },
-  originalIds: {
-    [internalId: string]: string | number
-  },
+  internalIds: CompactRange; 
+  originalIds: string[];
   fields: {
     [key: string]: TextFieldIndex | NumberFieldIndex | KeywordFieldIndex
-  }
+  };
 }
 
 export interface SearchResultsHit {
-  _id: string | number;
+  _id: string;
   _score: number;
   _source?: { [key: string]: any } | null;
   highlight?: { [key: string]: string | string[] };
