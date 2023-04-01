@@ -12,7 +12,12 @@ import {
   QueryField
 } from './interfaces'
 
-import { DEFAULT_ANALYZER, DEFAULT_TOKENIZER, DEFAULT_QUERY_OPTIONS } from './constants'
+import { 
+  DEFAULT_ANALYZER, 
+  DEFAULT_TOKENIZER, 
+  DEFAULT_QUERY_OPTIONS,
+  FIELD_CLASSES
+} from './constants'
 
 import { scoreBM25F } from './utils/bm25f'
 import { preprocessText } from './utils/preprocessing'
@@ -33,6 +38,19 @@ import { snippet } from './utils/snippet'
 import { validateOptions } from './utils/options'
 import { validateMappings } from './utils/mappings'
 
+const getOriginalIdByInternalId = (index: Index, internalId: number): string => 
+  index.originalIds[internalId - index.internalIds.missing.filter((x: number) => x < internalId).length]
+
+const getInternalIdByOriginalId = (index: Index, originalId: string): number => {
+  const i = index.originalIds.indexOf(originalId)
+  if (i === -1) {
+    throw new Error('ID not found: ' + originalId)
+  }
+
+  return i + index.internalIds.missing.filter((x: number) => x < i).length
+}
+  
+
 /**
  * Function for building a search index that later can be used for querying.
  *
@@ -46,8 +64,8 @@ export const createIndex = (mappings: Mappings): Index => {
     length: 0,
     mappings: validateMappings(mappings),
     fields: {},
-    internalIds: {},
-    originalIds: {}
+    internalIds: { min: 0, max: -1, missing: [] },
+    originalIds: []
   }
 
   return index
@@ -66,19 +84,19 @@ export const indexDocument = (
     throw new Error('Missing id')
   }
 
-  if (typeof index.internalIds[doc._id] !== 'undefined') {
+  if (typeof index.originalIds[doc._id as any] !== 'undefined') {
     throw new Error('Duplicate ID')
   }
 
-  let internalId = index.length
-  do {
-    internalId++
-  } while (index.internalIds[internalId])
+  if (!index.originalIds) {
+    index.originalIds = []
+  }
 
-  index.internalIds[doc._id] = internalId
-  index.originalIds[internalId] = doc._id
+  index.originalIds.push(String(doc._id))
+  index.internalIds.max++
+  index.length++
 
-  index.length += 1
+  const internalId = index.internalIds.max
 
   for (const [field, value] of Object.entries(doc)) {
     if (field === '_id') continue
@@ -127,17 +145,19 @@ export const removeDocument = (
   index: Index,
   doc: { [key: string]: any }
 ) => {
-  const internalId = index.internalIds[doc._id]
+  const internalId = getInternalIdByOriginalId(index, String(doc._id))
+
   if (internalId === undefined) {
     throw new Error('Document does not exist.')
   }
 
-  // TODO: delete from fields
+  for (const [field, type] of Object.entries(index.mappings)) {
+    FIELD_CLASSES[type].removeDocument(index.fields[field])
+  }
 
-  delete index.internalIds[doc._id]
-  delete index.originalIds[internalId]
-
-  index.length -= 1
+  index.internalIds.missing.push(internalId)
+  delete index.originalIds[index.originalIds.indexOf(String(doc._id))]
+  index.length--
 }
 
 /**
@@ -235,7 +255,8 @@ export const searchIndex = async (
 
     if (optionsValid.getDocument) {
       for (const [docId] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
-        sourcePromises.push(optionsValid.getDocument(index.originalIds[docId]))
+        const originalId = getOriginalIdByInternalId(index, docId)
+        sourcePromises.push(optionsValid.getDocument(originalId))
       }
     }
 
@@ -246,8 +267,9 @@ export const searchIndex = async (
       const _source: any = optionsValid.getDocument ? sources[i] : null
       const highlight: { [key: string]: string | string[] } = {}
 
+      const _id = getOriginalIdByInternalId(index, docId)
       const hit: SearchResultsHit = {
-        _id: index.originalIds[docId],
+        _id,
         _score,
         _source
       }
