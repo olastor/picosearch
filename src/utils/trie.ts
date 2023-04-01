@@ -2,13 +2,12 @@ import { TrieNode } from '../interfaces'
 import * as _ from './helper'
 
 export const trieInsert = <T>(
-  root: TrieNode<T>, 
-  item: T, 
-  sequence: string
+  root: TrieNode<T>,
+  item: T,
+  sequence: string[]
 ) => {
-  const chars = sequence.split('')
   let node = root
-  for (const c of chars) {
+  for (const c of sequence) {
     if (!node._c[c]) {
       const newNode: TrieNode<T> = { _c: {}, _d: [] }
       node._c[c] = newNode
@@ -22,13 +21,12 @@ export const trieInsert = <T>(
 }
 
 export const trieSearch = <T>(
-  root: TrieNode<T>, 
-  sequence: string,
+  root: TrieNode<T>,
+  sequence: string[],
   requireTerminal = true
 ): TrieNode<T> | null => {
-  const chars = sequence.split('')
   let node = root
-  for (const c of chars) {
+  for (const c of sequence) {
     if (typeof node._c[c] === 'undefined') {
       return null
     } else {
@@ -41,9 +39,9 @@ export const trieSearch = <T>(
 
 /**
  * Recursively delete a specific item from the whole tree.
- */ 
+ */
 export const trieDelete = <T>(
-  node: TrieNode<T>, 
+  node: TrieNode<T>,
   item: T,
   eql: (a: T, b: T) => boolean = (a, b) => a === b
 ): void => {
@@ -58,27 +56,27 @@ export const trieDelete = <T>(
 }
 
 export const trieFuzzySearch = <T>(
-  root: TrieNode<T>, 
-  sequence: string,
+  root: TrieNode<T>,
+  sequence: string[],
   maxDistance = 3,
   prefixLength = 0
-): [string, TrieNode<T>][] => {
+): [string[], TrieNode<T>][] => {
   let node: TrieNode<T> | null = root
   const prefix = sequence.slice(0, prefixLength)
   if (prefixLength > 0) {
-    node = trieSearch<T>(root, prefix, false)    
+    node = trieSearch<T>(root, prefix, false)
 
     if (node === null) {
       return []
     }
   }
-  
+
   const recurse = (
-    currentNode: TrieNode<T>, 
+    currentNode: TrieNode<T>,
     currentDistance: number,
-    currentSequence: string,
+    currentSequence: string[],
     charsLeft: string[]
-  ): [string, TrieNode<T>][] => {
+  ): [string[], TrieNode<T>][] => {
     if (currentDistance > maxDistance) {
       return []
     }
@@ -89,10 +87,10 @@ export const trieFuzzySearch = <T>(
 
     if (charsLeft.length === 0) {
       return [
-        ...(currentNode._d.length > 0 ? [[currentSequence, currentNode] as [string, TrieNode<T>]] : []),
+        ...(currentNode._d.length > 0 ? [[currentSequence, currentNode] as [string[], TrieNode<T>]] : []),
         ...Object.entries(currentNode._c)
-          .flatMap(([c, n]) => 
-            recurse(n, currentDistance + 1, currentSequence + c, [])
+          .flatMap(([c, n]) =>
+            recurse(n, currentDistance + 1, [...currentSequence, c], [])
           )
       ]
     }
@@ -104,18 +102,18 @@ export const trieFuzzySearch = <T>(
 
     for (const [char, childNode] of Object.entries(currentNode._c)) {
       if (char === charsLeft[0]) {
-        results = results.concat(recurse(childNode, currentDistance, currentSequence + char, charsLeft.slice(1)))
+        results = results.concat(recurse(childNode, currentDistance, [...currentSequence, char], charsLeft.slice(1)))
       } else {
         // insertion
-        results = results.concat(recurse(childNode, currentDistance + 1, currentSequence + char, charsLeft))
+        results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft))
         // substition
-        results = results.concat(recurse(childNode, currentDistance + 1, currentSequence + char, charsLeft.slice(1)))
+        results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft.slice(1)))
       }
     }
 
     return results
   }
 
-  const chars = sequence.slice(prefixLength).split('')
+  const chars = sequence.slice(prefixLength)
   return recurse(node, 0, prefix, chars)
 }

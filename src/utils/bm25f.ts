@@ -37,7 +37,7 @@ export const scoreBM25F = (
     let df = 0
     fields.forEach(field => {
       const textIndex = index.fields[field] as TextFieldIndex
-      const node = trieSearch(textIndex.docFreqsByToken, token)
+      const node = trieSearch(textIndex.docFreqsByToken, token.split(''))
       if (!node) {
         return
       }
@@ -53,7 +53,7 @@ export const scoreBM25F = (
     for (const docId of docIds) {
       const idf = Math.log(
         1 +
-        (numberOfDocs - df + 0.5) / 
+        (numberOfDocs - df + 0.5) /
         (df + 0.5)
       )
 
@@ -64,7 +64,7 @@ export const scoreBM25F = (
   }
 
   const ranked = Object.entries(docScores).sort((a, b) => b[1] - a[1])
-    .map((x) => [Number(x[0]), x[1]] as [number, number]) 
+    .map((x) => [Number(x[0]), x[1]] as [number, number])
 
   return ranked
 }

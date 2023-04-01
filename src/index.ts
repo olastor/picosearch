@@ -1,4 +1,4 @@
-import { 
+import {
   SearchResults,
   Index,
   Mappings,
@@ -83,7 +83,7 @@ export const indexDocument = (
   for (const [field, value] of Object.entries(doc)) {
     if (field === '_id') continue
 
-    const type = index.mappings[field]      
+    const type = index.mappings[field]
 
     if (type === 'text') {
       if (!index.fields[field]) {
@@ -182,15 +182,16 @@ export const searchIndex = async (
       const originalTokens = [...queryTokens]
 
       // enrich query tokens with tokens from the search index
-      // that are similar within the defined error boundary. 
+      // that are similar within the defined error boundary.
       for (const token of originalTokens) {
         for (const field of textFields) {
           trieFuzzySearch<[number, number]>(
-            (index.fields[field] as TextFieldIndex).docFreqsByToken, 
-            token,
+            (index.fields[field] as TextFieldIndex).docFreqsByToken,
+            token.split(''),
             optionsValid.fuzziness.maxError,
             optionsValid.fuzziness.prefixLength || 0
-          ).forEach(([fuzzyToken]) => {
+          ).forEach(([fuzzyTokenChars]) => {
+            const fuzzyToken = fuzzyTokenChars.join('')
             if (!queryTokens.includes(fuzzyToken)) {
               queryTokens.push(fuzzyToken)
             }
@@ -256,9 +257,9 @@ export const searchIndex = async (
           const text = _.get(_source, field)
           highlight[field] = Array.isArray(text)
             ? text.map(t => highlightText(
-              queryTokens, 
-              t, 
-              analyzer, 
+              queryTokens,
+              t,
+              analyzer,
               tokenizer,
               optionsValid.highlightTags[0],
               optionsValid.highlightTags[1],
@@ -266,7 +267,7 @@ export const searchIndex = async (
               : highlightText(
                 queryTokens,
                 text,
-              analyzer, 
+              analyzer,
               tokenizer,
               optionsValid.highlightTags[0],
               optionsValid.highlightTags[1],
@@ -309,7 +310,7 @@ export const searchIndex = async (
       maxScore: hits.length > 0 ? hits[0]._score : 0,
       hits
     }
-  }  
+  }
 
   return {
     total: 0,

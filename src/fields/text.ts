@@ -35,9 +35,9 @@ export default class TextField  {
     tokens.forEach((token: string) => {
       tokenFreqs[token] = (tokenFreqs[token] || 0) + 1
     })
-    
+
     Object.entries(tokenFreqs).forEach(([token, freq]) => {
-      trieInsert<[number, number]>(fieldIndex.docFreqsByToken, [documentId, freq], token)
+      trieInsert<[number, number]>(fieldIndex.docFreqsByToken, [documentId, freq], token.split(''))
     })
 
     fieldIndex.docLengths[documentId.toString()] = tokens.length

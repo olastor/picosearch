@@ -12,11 +12,11 @@ export default class KeywordField  {
     documentFieldValue: string | string[]
   ): void {
     if (Array.isArray(documentFieldValue)) {
-      [...new Set(documentFieldValue)].forEach(val => this.indexDocument(fieldIndex, documentId, val))      
+      [...new Set(documentFieldValue)].forEach(val => this.indexDocument(fieldIndex, documentId, val))
       return
     }
 
-    trieInsert<number>(fieldIndex, documentId, documentFieldValue)
+    trieInsert<number>(fieldIndex, documentId, documentFieldValue.split(''))
   }
 
   public static removeDocument(
@@ -48,7 +48,7 @@ export default class KeywordField  {
       return [...new Set((filter as string[])
         .flatMap(keyword => KeywordField.filterDocuments(fieldIndex, keyword)))]
     } else if (typeof filter === 'string') {
-      const node = trieSearch<number>(fieldIndex, filter)
+      const node = trieSearch<number>(fieldIndex, filter.split(''))
       return node ? node._d : []
     } else {
       throw new Error(`Invalid value '${filter}' provided for filtering the field.`)
