@@ -122,8 +122,6 @@ export interface SearchResultsHit {
   _id: string;
   _score: number;
   _source?: { [key: string]: any } | null;
-  highlight?: { [key: string]: string | string[] };
-  snippets?: { [key: string]: string[][] | string[] };
 }
 
 /** Data structure for a search result. */
