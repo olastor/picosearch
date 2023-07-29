@@ -40,80 +40,80 @@ export const trieSearch = <T>(
 /**
  * Recursively delete a specific item from the whole tree.
  */
-export const trieDelete = <T>(
-  node: TrieNode<T>,
-  item: T,
-  eql: (a: T, b: T) => boolean = (a, b) => a === b
-): void => {
-  if (node._d && node._d.length > 0) {
-    node._d = node._d.filter(x => !eql(x, item))
-  }
+// export const trieDelete = <T>(
+//   node: TrieNode<T>,
+//   item: T,
+//   eql: (a: T, b: T) => boolean = (a, b) => a === b
+// ): void => {
+//   if (node._d && node._d.length > 0) {
+//     node._d = node._d.filter(x => !eql(x, item))
+//   }
 
-  if (node._c) {
-    Object.values(node._c)
-      .forEach(n => trieDelete(n, item, eql))
-  }
-}
+//   if (node._c) {
+//     Object.values(node._c)
+//       .forEach(n => trieDelete(n, item, eql))
+//   }
+// }
 
-export const trieFuzzySearch = <T>(
-  root: TrieNode<T>,
-  sequence: string[],
-  maxDistance = 3,
-  prefixLength = 0
-): [string[], TrieNode<T>][] => {
-  let node: TrieNode<T> | null = root
-  const prefix = sequence.slice(0, prefixLength)
-  if (prefixLength > 0) {
-    node = trieSearch<T>(root, prefix, false)
+// export const trieFuzzySearch = <T>(
+//   root: TrieNode<T>,
+//   sequence: string[],
+//   maxDistance = 3,
+//   prefixLength = 0
+// ): [string[], TrieNode<T>][] => {
+//   let node: TrieNode<T> | null = root
+//   const prefix = sequence.slice(0, prefixLength)
+//   if (prefixLength > 0) {
+//     node = trieSearch<T>(root, prefix, false)
 
-    if (node === null) {
-      return []
-    }
-  }
+//     if (node === null) {
+//       return []
+//     }
+//   }
 
-  const recurse = (
-    currentNode: TrieNode<T>,
-    currentDistance: number,
-    currentSequence: string[],
-    charsLeft: string[]
-  ): [string[], TrieNode<T>][] => {
-    if (currentDistance > maxDistance) {
-      return []
-    }
+//   const recurse = (
+//     currentNode: TrieNode<T>,
+//     currentDistance: number,
+//     currentSequence: string[],
+//     charsLeft: string[]
+//   ): [string[], TrieNode<T>][] => {
+//     if (currentDistance > maxDistance) {
+//       return []
+//     }
 
-    if (Object.keys(currentNode._c).length === 0) {
-      return currentNode._d.length > 0 ? [[currentSequence, currentNode]] : []
-    }
+//     if (Object.keys(currentNode._c).length === 0) {
+//       return currentNode._d.length > 0 ? [[currentSequence, currentNode]] : []
+//     }
 
-    if (charsLeft.length === 0) {
-      return [
-        ...(currentNode._d.length > 0 ? [[currentSequence, currentNode] as [string[], TrieNode<T>]] : []),
-        ...Object.entries(currentNode._c)
-          .flatMap(([c, n]) =>
-            recurse(n, currentDistance + 1, [...currentSequence, c], [])
-          )
-      ]
-    }
+//     if (charsLeft.length === 0) {
+//       return [
+//         ...(currentNode._d.length > 0 ? [[currentSequence, currentNode] as [string[], TrieNode<T>]] : []),
+//         ...Object.entries(currentNode._c)
+//           .flatMap(([c, n]) =>
+//             recurse(n, currentDistance + 1, [...currentSequence, c], [])
+//           )
+//       ]
+//     }
 
-    let results = [
-      // deletion
-      ...recurse(currentNode, currentDistance + 1, currentSequence, charsLeft.slice(1))
-    ]
+//     let results = [
+//       // deletion
+//       ...recurse(currentNode, currentDistance + 1, currentSequence, charsLeft.slice(1))
+//     ]
 
-    for (const [char, childNode] of Object.entries(currentNode._c)) {
-      if (char === charsLeft[0]) {
-        results = results.concat(recurse(childNode, currentDistance, [...currentSequence, char], charsLeft.slice(1)))
-      } else {
-        // insertion
-        results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft))
-        // substition
-        results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft.slice(1)))
-      }
-    }
+//     for (const [char, childNode] of Object.entries(currentNode._c)) {
+//       if (char === charsLeft[0]) {
+//         results = results.concat(recurse(childNode, currentDistance, [...currentSequence, char], charsLeft.slice(1)))
+//       } else {
+//         // insertion
+//         results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft))
+//         // substition
+//         results = results.concat(recurse(childNode, currentDistance + 1, [...currentSequence, char], charsLeft.slice(1)))
+//       }
+//     }
 
-    return results
-  }
+//     return results
+//   }
 
-  const chars = sequence.slice(prefixLength)
-  return recurse(node, 0, prefix, chars)
-}
+//   const chars = sequence.slice(prefixLength)
+//   return recurse(node, 0, prefix, chars)
+// }

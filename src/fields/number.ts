@@ -1,9 +1,9 @@
-import { IndexField, NumberFieldIndex } from '../interfaces'
+import { NumberFieldIndex } from '../interfaces'
 import { binarySearch } from '../utils/binary-search'
 
 export default class NumberField {
   public static initialize() {
-    return [] 
+    return []
   }
 
   public static indexDocument(
@@ -12,19 +12,19 @@ export default class NumberField {
     documentFieldValue: number | number[]
   ): void {
     if (Array.isArray(documentFieldValue)) {
-      [...new Set(documentFieldValue)].forEach(val => NumberField.indexDocument(fieldIndex, documentId, val))      
+      [...new Set(documentFieldValue)].forEach(val => NumberField.indexDocument(fieldIndex, documentId, val))
       return
     }
 
     const insertionIndex = binarySearch(
-      documentFieldValue, 
+      documentFieldValue,
       fieldIndex,
       true,
       (item: [number, number[]]) => item[0]
     )
 
     if (
-      fieldIndex.length > 0 && 
+      fieldIndex.length > 0 &&
       insertionIndex < fieldIndex.length &&
       fieldIndex[insertionIndex][0] === documentFieldValue
     ) {
@@ -32,34 +32,6 @@ export default class NumberField {
     } else {
       fieldIndex.splice(insertionIndex, 0, [documentFieldValue, [documentId]])
     }
-  }
-
-  public static removeDocument(
-    fieldIndex: NumberFieldIndex,
-    documentId: number
-  ): void {
-    const toDelete: number[] = []
-
-    fieldIndex.forEach(([value, docIds], i) => {
-      const foundIndex = docIds.findIndex(x => x === documentId)
-      if (foundIndex !== -1) {
-        docIds.splice(foundIndex, 1)
-        if (docIds.length === 0) {
-          toDelete.push(i)
-        }
-      }
-    })
-
-    toDelete.reverse().forEach(i => fieldIndex.splice(i, 1))
-  }
-
-  public static updateDocument(
-    fieldIndex: NumberFieldIndex,
-    documentId: number,
-    documentFieldValue: number | number[]
-  ): void {
-    NumberField.removeDocument(fieldIndex, documentId)
-    NumberField.indexDocument(fieldIndex, documentId, documentFieldValue)
   }
 
   public static filterDocuments(
@@ -143,7 +115,7 @@ export default class NumberField {
           ([value]) => value
         )
         if (maxIndex < fieldIndex.length && fieldIndex[maxIndex][0] > $lte) {
-          maxIndex = maxIndex - 1        
+          maxIndex = maxIndex - 1
         }
       }
 

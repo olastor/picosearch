@@ -1,4 +1,4 @@
-/** 
+/**
   * The analyzer is a function for applying preprocessing steps, such as
   * stemming or lowercasing, to a single token.
   */
@@ -38,26 +38,11 @@ export type CompactRange = {
 export interface QueryField {
   /** The weight of this field. Values lower than 1 will decrease importance, values above 1 introduce a boosting. */
   weight?: number,
-
-  /** Whether or not to highlight matching words for this field. */
-  highlight?: boolean,
-
-  /** Whether or not to include snippets (small text pieces that are matching one of the query words) for this field in the results. Snippets are always highlighted, as well. */
-  snippet?: boolean
 }
 
 export interface QueryOptions {
   /** A list of text fields to use for searching or an object specifying more specific options for each field using the QueryField options. */
   queryFields?: string[] | { [field: string]: QueryField };
-
-  /** Options for fuzziness. */
-  fuzziness: {
-    /** The maximum Levenshtein/Edit distance allowed to include similar tokens. */
-    maxError: number;
-
-    /** The length of a prefix that is excluded from fuzzy matching and must be the same as the matching query token. */
-    prefixLength: number;
-  };
 
   /** Filters to exclude/include specific documents based on fields that are not of type 'text'. */
   filter?: {
@@ -70,27 +55,21 @@ export interface QueryOptions {
   /** The number of hits to skip before returning, e.g. for doing pagination. */
   offset: number;
 
-  /** The opening/closing tags to use for highlighting. Default: ['<b>', '</b>'] */
-  highlightTags: [string, string];
-
   /** A mapping of synonyms of analyzed tokens. */
   synonyms?: { [token: string]: string[] };
 
-  /** The minimum window size to add context left or right to a snippet. */
-  snippetMinWindowSize: number;
-
   getDocument?: (documentId: string) => Promise<{ [key: string]: any } | null> | null;
-  
+
   /** Object for specifying custom BM25 parameters. */
   bm25: {
-    /** 
-      * The `b` value. 
+    /**
+      * The `b` value.
       * @defaultValue 1.2
       */
     k1: number
 
-    /** 
-      * The `k1` value. 
+    /**
+      * The `k1` value.
       * @defaultValue 0.75
       */
     b: number
@@ -103,8 +82,8 @@ export interface QueryOptions {
   * to the user.
   */
 export type TextFieldIndex = {
-  /** 
-    * A mapping of tokens to an array, in which the first value 
+  /**
+    * A mapping of tokens to an array, in which the first value
     * is the document ID this token is present and the second value
     * equals to the frequency of that token in the document.
     */
@@ -126,13 +105,13 @@ export type KeywordFieldIndex = TrieNode<number>;
 export type MappingType = 'text' | 'keyword' | 'number' | 'date'
 
 export interface Mappings {
- [field: string]: MappingType 
+ [field: string]: MappingType
 }
 
 export interface Index {
   length: number;
-  mappings: Mappings; 
-  internalIds: CompactRange; 
+  mappings: Mappings;
+  internalIds: CompactRange;
   originalIds: string[];
   fields: {
     [key: string]: TextFieldIndex | NumberFieldIndex | KeywordFieldIndex
@@ -156,6 +135,4 @@ export interface SearchResults {
 
 export interface IndexField {
   indexDocument(fieldIndex: any, document: { [key: string]: unknown }, documentFieldValue: any): { [key: string]: any };
-  removeDocument(fieldIndex: any, documentId: number): void;
-  updateDocument(fieldIndex: any, document: { [key: string]: unknown }): void;
 }

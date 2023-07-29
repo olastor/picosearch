@@ -3,7 +3,7 @@ import NumberField from './number'
 
 export default class DateField {
   public static initialize() {
-    return [] 
+    return []
   }
 
   public static indexDocument(
@@ -18,22 +18,6 @@ export default class DateField {
     }
   }
 
-  public static removeDocument(
-    fieldIndex: NumberFieldIndex,
-    documentId: number
-  ): void {
-    NumberField.removeDocument(fieldIndex, documentId)
-  }
-
-  public static updateDocument(
-    fieldIndex: NumberFieldIndex,
-    documentId: number,
-    documentFieldValue: number | number[]
-  ): void {
-    NumberField.removeDocument(fieldIndex, documentId)
-    NumberField.indexDocument(fieldIndex, documentId, documentFieldValue)
-  }
-
   public static filterDocuments(
     fieldIndex: NumberFieldIndex,
     filter: any
@@ -46,5 +30,4 @@ export default class DateField {
 
     throw new Error('Invalid filter')
   }
-
 }

@@ -1,5 +1,5 @@
-import { IndexField, KeywordFieldIndex } from '../interfaces'
-import { trieInsert, trieSearch, trieDelete, trieFuzzySearch } from '../utils/trie'
+import { KeywordFieldIndex } from '../interfaces'
+import { trieInsert, trieSearch } from '../utils/trie'
 
 export default class KeywordField  {
   public static initialize(): KeywordFieldIndex {
@@ -17,22 +17,6 @@ export default class KeywordField  {
     }
 
     trieInsert<number>(fieldIndex, documentId, documentFieldValue.split(''))
-  }
-
-  public static removeDocument(
-    fieldIndex: KeywordFieldIndex,
-    documentId: number
-  ): void {
-    trieDelete(fieldIndex, documentId)
-  }
-
-  public static updateDocument(
-    fieldIndex: KeywordFieldIndex,
-    documentId: number,
-    documentFieldValue: string | string[]
-  ): void {
-    this.removeDocument(fieldIndex, documentId)
-    this.indexDocument(fieldIndex, documentId, documentFieldValue)
   }
 
   public static filterDocuments(
