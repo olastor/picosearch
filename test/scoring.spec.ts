@@ -1,4 +1,4 @@
-import { 
+import {
   indexDocument,
   createIndex,
   searchIndex,
@@ -66,7 +66,7 @@ const evaluateDataset = async (name: string, options: any) => {
   console.time(`INDEX: ${name}`)
   const index = createIndex({ text: 'text', title: 'text' })
   docs.forEach((doc: any) => indexDocument(
-    index, 
+    index,
     { _id: doc._id, text: doc['text'], title: doc['title'] }, analyzer
   ))
   console.timeEnd(`INDEX: ${name}`)

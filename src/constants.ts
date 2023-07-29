@@ -1,5 +1,4 @@
-
-import { 
+import {
   QueryOptions,
   Analyzer,
   Tokenizer,
@@ -23,7 +22,7 @@ export const DEFAULT_TOKENIZER: Tokenizer = (text: string): string[] => {
   const tokens: string[] = text.match(/\w+|\$[\d\.]+|\S+/g) || []
   return tokens
 }
-/** 
+/**
   * The default search options. See interface for documentation of default values.
   */
 export const DEFAULT_ANALYZER: Analyzer = (token = '') => {
@@ -33,12 +32,6 @@ export const DEFAULT_ANALYZER: Analyzer = (token = '') => {
 export const DEFAULT_QUERY_OPTIONS: QueryOptions = {
   offset: 0,
   size: 10,
-  fuzziness: {
-    maxError: 0,
-    prefixLength: 0
-  },
-  highlightTags: ['<em>', '</em>'],
-  snippetMinWindowSize: 17,
   bm25: {
     k1: 1.2,
     b: 0.75
@@ -53,7 +46,7 @@ export const DEFAULT_FIELD_OPTIONS = {
 
 export const EMPTY_TEXT_FIELD_INDEX: TextFieldIndex = {
   docFreqsByToken: {
-    _c: {}, 
+    _c: {},
     _d: []
   },
   docLengths: {},

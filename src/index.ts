@@ -8,15 +8,13 @@ import {
   Analyzer,
   Tokenizer,
   QueryOptions,
-  SearchResultsHit,
-  QueryField
+  SearchResultsHit
 } from './interfaces'
 
-import { 
-  DEFAULT_ANALYZER, 
-  DEFAULT_TOKENIZER, 
-  DEFAULT_QUERY_OPTIONS,
-  FIELD_CLASSES
+import {
+  DEFAULT_ANALYZER,
+  DEFAULT_TOKENIZER,
+  DEFAULT_QUERY_OPTIONS
 } from './constants'
 
 import { scoreBM25F } from './utils/bm25f'
@@ -32,24 +30,11 @@ import NumberField from './fields/number'
 import TextField from './fields/text'
 
 import { evaluateFilter } from './utils/filter'
-import { trieFuzzySearch } from './utils/trie'
-import { highlightText } from './utils/highlight'
-import { snippet } from './utils/snippet'
 import { validateOptions } from './utils/options'
 import { validateMappings } from './utils/mappings'
 
-const getOriginalIdByInternalId = (index: Index, internalId: number): string => 
+const getOriginalIdByInternalId = (index: Index, internalId: number): string =>
   index.originalIds[internalId - index.internalIds.missing.filter((x: number) => x < internalId).length]
-
-const getInternalIdByOriginalId = (index: Index, originalId: string): number => {
-  const i = index.originalIds.indexOf(originalId)
-  if (i === -1) {
-    throw new Error('ID not found: ' + originalId)
-  }
-
-  return i + index.internalIds.missing.filter((x: number) => x < i).length
-}
-  
 
 /**
  * Function for building a search index that later can be used for querying.
@@ -141,25 +126,6 @@ export const indexDocument = (
   }
 }
 
-export const removeDocument = (
-  index: Index,
-  doc: { [key: string]: any }
-) => {
-  const internalId = getInternalIdByOriginalId(index, String(doc._id))
-
-  if (internalId === undefined) {
-    throw new Error('Document does not exist.')
-  }
-
-  for (const [field, type] of Object.entries(index.mappings)) {
-    FIELD_CLASSES[type].removeDocument(index.fields[field])
-  }
-
-  index.internalIds.missing.push(internalId)
-  delete index.originalIds[index.originalIds.indexOf(String(doc._id))]
-  index.length--
-}
-
 /**
  * Function querying an existing search index.
  *
@@ -186,40 +152,8 @@ export const searchIndex = async (
     filteredDocumentIds = evaluateFilter(index, optionsValid.filter)
   }
 
-  const highlightedFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
-    .filter(([field, opts]) => opts.highlight)
-    .map(([field]) => field)
-
-  const snippetFields: string[] = Object.entries(optionsValid.queryFields as { [key: string]: QueryField })
-    .filter(([field, opts]) => opts.snippet)
-    .map(([field]) => field)
-
   if (query) {
     let queryTokens = preprocessText(query, analyzer, tokenizer)
-    const textFields = Object.keys(optionsValid.queryFields as QueryField)
-
-    if (optionsValid.fuzziness.maxError) {
-      const originalTokens = [...queryTokens]
-
-      // enrich query tokens with tokens from the search index
-      // that are similar within the defined error boundary.
-      for (const token of originalTokens) {
-        for (const field of textFields) {
-          trieFuzzySearch<[number, number]>(
-            (index.fields[field] as TextFieldIndex).docFreqsByToken,
-            token.split(''),
-            optionsValid.fuzziness.maxError,
-            optionsValid.fuzziness.prefixLength || 0
-          ).forEach(([fuzzyTokenChars]) => {
-            const fuzzyToken = fuzzyTokenChars.join('')
-            if (!queryTokens.includes(fuzzyToken)) {
-              queryTokens.push(fuzzyToken)
-            }
-          })
-        }
-      }
-    }
-
 
     if (queryTokens.length === 0) {
       return {
@@ -237,6 +171,8 @@ export const searchIndex = async (
           .flatMap(([token, syns]) => syns)
       ]
     }
+
+    queryTokens = [...new Set(queryTokens)]
 
     let ranked = scoreBM25F(
       queryTokens,
@@ -265,8 +201,6 @@ export const searchIndex = async (
     let i = 0
     for (const [docId, _score] of ranked.slice(optionsValid.offset, optionsValid.offset + optionsValid.size)) {
       const _source: any = optionsValid.getDocument ? sources[i] : null
-      const highlight: { [key: string]: string | string[] } = {}
-
       const _id = getOriginalIdByInternalId(index, docId)
       const hit: SearchResultsHit = {
         _id,
@@ -274,58 +208,9 @@ export const searchIndex = async (
         _source
       }
 
-      if (_source && (highlightedFields.length > 0 || snippetFields.length > 0)) {
-        highlightedFields.forEach(field => {
-          const text = _.get(_source, field)
-          highlight[field] = Array.isArray(text)
-            ? text.map(t => highlightText(
-              queryTokens,
-              t,
-              analyzer,
-              tokenizer,
-              optionsValid.highlightTags[0],
-              optionsValid.highlightTags[1],
-            ))
-              : highlightText(
-                queryTokens,
-                text,
-              analyzer,
-              tokenizer,
-              optionsValid.highlightTags[0],
-              optionsValid.highlightTags[1],
-              )
-        })
-
-        if (highlightedFields.length > 0) {
-          hit.highlight = highlight
-        }
-
-        if (snippetFields.length > 0) {
-          hit.snippets = {}
-          for (const [field, hled] of Object.entries(highlight)) {
-            if (Array.isArray(hled)) {
-              hit.snippets[field] = hled.map(hl => snippet(
-                hl,
-                optionsValid.highlightTags[0],
-                optionsValid.highlightTags[1],
-                optionsValid.snippetMinWindowSize
-              ))
-            } else {
-              hit.snippets[field] = snippet(
-                hled,
-                optionsValid.highlightTags[0],
-                optionsValid.highlightTags[1],
-                optionsValid.snippetMinWindowSize
-              )
-            }
-          }
-        }
-      }
-
       hits.push(hit)
       i++
     }
-
 
     return {
       total: ranked.length,

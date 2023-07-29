@@ -1,8 +1,7 @@
 import { DEFAULT_QUERY_OPTIONS, DEFAULT_FIELD_OPTIONS } from '../constants'
-import { 
-  Index, 
-  QueryOptions,
-  Mappings
+import {
+  Index,
+  QueryOptions
 } from '../interfaces'
 
 export const validateOptions = (
@@ -13,21 +12,18 @@ export const validateOptions = (
     return DEFAULT_QUERY_OPTIONS
   }
 
-  const { 
-    offset, 
-    size, 
-    fuzziness, 
-    queryFields, 
-    snippetMinWindowSize,
-    getDocument, 
+  const {
+    offset,
+    size,
+    queryFields,
+    getDocument,
     bm25,
-    highlightTags,
     filter,
     synonyms,
     ...otherProps
   } = options
 
-  const validatedOptions: QueryOptions = { 
+  const validatedOptions: QueryOptions = {
     ...DEFAULT_QUERY_OPTIONS
   }
 
@@ -52,38 +48,12 @@ export const validateOptions = (
     validatedOptions.size = size
   }
 
-  if (typeof snippetMinWindowSize !== 'undefined' && (typeof snippetMinWindowSize !== 'number' || snippetMinWindowSize < 0)) {
-    throw new Error('Option "snippetMinWindowSize" must be a non-negative integer.')
-  }
-
-  if (typeof snippetMinWindowSize !== 'undefined') {
-    validatedOptions.snippetMinWindowSize = snippetMinWindowSize
-  }
-
   if (typeof offset !== 'undefined' && (typeof offset !== 'number' || offset < 0)) {
     throw new Error('Option "offset" must be a non-negative integer.')
   }
 
   if (typeof offset !== 'undefined') {
     validatedOptions.offset = offset
-  }
-
-  if (fuzziness) {
-    const { maxError, prefixLength } = fuzziness
-
-    if (typeof maxError === 'undefined') {
-      fuzziness.maxError = DEFAULT_QUERY_OPTIONS.fuzziness.maxError
-    } else if (typeof maxError !== 'number' || maxError < 0) {
-      throw new Error('Option "fuzziness.maxError" must be a non-negative integer.')
-    }
-
-    if (typeof prefixLength === 'undefined') {
-      fuzziness.prefixLength = DEFAULT_QUERY_OPTIONS.fuzziness.prefixLength
-    } else if (typeof prefixLength !== 'number' || prefixLength < 0) {
-      throw new Error('Option "fuzziness.prefixLength" must be a non-negative integer.')
-    }
-
-    validatedOptions.fuzziness = { ...fuzziness }
   }
 
   if (bm25) {
@@ -111,14 +81,6 @@ export const validateOptions = (
     }
   }
 
-  if (highlightTags) {
-    if (!Array.isArray(highlightTags) || highlightTags.length !== 2 || highlightTags.find(x => typeof x !== 'string')) {
-      throw new Error('Option "highlightTags" must an array with exactly two string items.')
-    }
-
-    validatedOptions.highlightTags = highlightTags
-  }
-
   if (Array.isArray(queryFields)) {
     if ((queryFields as any[]).find((item: any) => typeof item !== 'string')) {
       throw new Error('Option "queryFields" must be an array of strings or an object.')
@@ -134,7 +96,7 @@ export const validateOptions = (
         (acc, field) => {
           acc[field] = { ...DEFAULT_FIELD_OPTIONS }
           return acc
-        }, 
+        },
         {} as { [key: string]: any }
       )
   } else if (typeof queryFields === 'object') {
@@ -147,22 +109,14 @@ export const validateOptions = (
         throw new Error(`Option "queryFields.${field}" must be an object.`)
       }
 
-      const { highlight, snippet, weight, ...otherFieldOpts } = fieldOpts
-
-      if (typeof highlight !== 'undefined' && typeof highlight !== 'boolean') {
-        throw new Error(`Option "queryFields.${field}.highlight must be a boolean if specified."`)
-      }
-
-      if (typeof snippet !== 'undefined' && typeof snippet !== 'boolean') {
-        throw new Error(`Option "queryFields.${field}.snippet must be a boolean if specified."`)
-      }
+      const { weight, ...otherFieldOpts } = fieldOpts
 
       if (typeof weight !== 'undefined' && (typeof weight !== 'number' || weight < 0)) {
         throw new Error(`Option "queryFields.${field}.weight must be a non-negative number if specified."`)
       }
 
       if (Object.keys(otherFieldOpts).length > 0) {
-        throw new Error(`Encountered invalid options for field ${field}: ${Object.keys(otherFieldOpts).join(', ')}`) 
+        throw new Error(`Encountered invalid options for field ${field}: ${Object.keys(otherFieldOpts).join(', ')}`)
       }
 
       validatedOptions.queryFields = {
@@ -173,11 +127,9 @@ export const validateOptions = (
         }
       } as {
         [field: string]: {
-          weight?: number,
-          highlight?: boolean,
-          snippet?: boolean
+          weight?: number
         }
-      } 
+      }
     })
   } else if (!queryFields) {
     validatedOptions.queryFields = Object.entries(index.mappings)
@@ -186,7 +138,7 @@ export const validateOptions = (
         (acc, [field]) => {
           acc[field] = { ...DEFAULT_FIELD_OPTIONS }
           return acc
-        }, 
+        },
         {} as { [key: string]: any }
       )
   } else {
@@ -197,7 +149,7 @@ export const validateOptions = (
     throw new Error('Option "getDocument" must be a function if specified.')
   }
 
-  
+
   if (typeof getDocument !== 'undefined') {
     validatedOptions.getDocument = getDocument
   }

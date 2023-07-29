@@ -5,13 +5,13 @@ import { FIELD_CLASSES } from '../constants'
 /**
   * Retrieves the internal document IDs that match the filter.
   *
-  *   - A filter is either an object or an array of objects. 
+  *   - A filter is either an object or an array of objects.
   *   - Properties specify the field to filter for OR one of the boolean expressions "$and", "$or" or "$not".
   *   - Specifying an array (e.g., of numbers) instead of an exact filter term always assumes that any of them can match.
-  *   - If there are multiple properties or objects defining filters, they're by default used to find documents that match all filters, EXCEPT a custom boolean filter has been specified in the parent level (in nested filters). 
+  *   - If there are multiple properties or objects defining filters, they're by default used to find documents that match all filters, EXCEPT a custom boolean filter has been specified in the parent level (in nested filters).
   *
   * Examples:
-  *   
+  *
   *   { tags: ["a", "b"] } => Find documents with either tags=a or tags=b (or both).
   *   { $and: [{ tags: "a" }, { tags: "b" }] } => Document tags must include both a and b.
   *   { $not: { tags: ["a", "b"] } } => Every document without tags a or b
@@ -27,7 +27,7 @@ export const evaluateFilter = (
   let operands: number[][] = []
 
   if (Array.isArray(filter)) {
-    operands = filter.map(f => evaluateFilter(index, f)) 
+    operands = filter.map(f => evaluateFilter(index, f))
   } else if (typeof filter === 'object') {
     for (const [key, value] of Object.entries(filter)) {
       const fieldMappingType: string = index.mappings[key]
@@ -49,7 +49,7 @@ export const evaluateFilter = (
   }
 
   if (operator === '$and') {
-    return _.intersection(operands) 
+    return _.intersection(operands)
   }
 
   if (operator === '$or') {
