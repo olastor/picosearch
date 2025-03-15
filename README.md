@@ -33,7 +33,7 @@ const documents: MyDoc[] = [
 
 const pico = new Picosearch<MyDoc>();
 pico.insertMultipleDocuments(documents);
-console.log(pico.searchDocuments('jump sun'));
+console.log(pico.searchDocuments('fox'));
 // returns
 //[
 //  {
