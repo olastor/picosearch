@@ -10,12 +10,16 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest",
-    "lint": "biome check"
+    "lint": "biome check",
+    "type-check": "tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "stopword": "^3.1.4"
+  },
+  "devDependencies": {
+    "@types/stopword": "^2.0.3"
   }
 }
