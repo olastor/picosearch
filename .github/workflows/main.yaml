@@ -50,6 +50,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "packages/picosearch/pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
+        working-directory: packages/picosearch
       - run: pnpm run benchmark
         working-directory: packages/picosearch
       - name: Cache benchmark data
