@@ -34,6 +34,18 @@ const documents: MyDoc[] = [
 const pico = new Picosearch<Doc>();
 pico.insertMultipleDocuments(documents);
 console.log(pico.searchDocuments('jump sun'));
+// returns
+//[
+//  {
+//    "id": "1",
+//    "score": 0.5406145489041012,
+//    "doc": {
+//      "id": "1",
+//      "text": "The quick brown fox",
+//      "additionalText": "A speedy canine"
+//    }
+//  }
+//]
 ```
 
 Please note that currently, a document must be flat, can only contain string values, and needs an `id` field (also a string)!
