@@ -1,0 +1,33 @@
+{
+  "name": "@picosearch/picosearch",
+  "version": "2.0.0-rc1",
+  "description": "Minimalistic full-text search, zero dependencies, local-first, browser-compatible.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest src/",
+    "benchmark": "vitest --hookTimeout 60000 --testTimeout 60000 benchmark/",
+    "lint": "biome check",
+    "type-check": "tsc"
+  },
+  "author": "Sebastian Kussl",
+  "license": "MIT",
+  "devDependencies": {
+    "unzipper": "^0.12.3",
+    "@picosearch/language-german": "workspace:*",
+    "@picosearch/language-english": "workspace:*"
+  },
+  "homepage": "https://github.com/olastor/picosearch#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olastor/picosearch"
+  },
+  "bugs": {
+    "url": "https://github.com/olastor/picosearch/issues"
+  },
+  "packageManager": "pnpm@9.15.5+sha512.845196026aab1cc3f098a0474b64dfbab2afe7a1b4e91dd86895d8e4aa32a7a6d03049e2d0ad770bbe4de023a7122fb68c1a1d6e0d033c7076085f9d5d4800d4"
+}

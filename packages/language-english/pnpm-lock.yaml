@@ -1,0 +1,30 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      porter-stemmer:
+        specifier: ^0.9.1
+        version: 0.9.1
+      stopword:
+        specifier: ^3.1.4
+        version: 3.1.4
+
+packages:
+
+  porter-stemmer@0.9.1:
+    resolution: {integrity: sha512-vnSYgMMWKMo0+zCUumdcQAYE2RD55k2b27sPySqseetSRaGtXCCktv3llCB4EXyU1nQApMM5u+rGwVWcW72AHg==}
+
+  stopword@3.1.4:
+    resolution: {integrity: sha512-RiyU12FwHWX1i42gxhn5sywgpV5mptZTzbHKqKh5wVDWC2Uu+8vKbLv8xxeNa0p29vECbYGLXpDayo54n9+dsg==}
+
+snapshots:
+
+  porter-stemmer@0.9.1: {}
+
+  stopword@3.1.4: {}

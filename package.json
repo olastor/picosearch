@@ -1,43 +1,13 @@
 {
-  "name": "picosearch",
-  "version": "1.0.0",
-  "description": "Tiny, customizable module for creating basic full-text search indices and queries using the BM25F algorithm.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "test": "jest",
-    "lint": "eslint src/",
-    "docs": "typedoc"
-  },
-  "author": "Sebastian Kussl",
-  "license": "MIT",
+  "packageManager": "pnpm@10.6.3+sha512.bb45e34d50a9a76e858a95837301bfb6bd6d35aea2c5d52094fa497a467c43f5c440103ce2511e9e0a2f89c3d6071baac3358fc68ac6fb75e2ceb3d2736065e6",
   "devDependencies": {
-    "@fast-check/jest": "^1.6.0",
-    "@types/jest": "^29.4.0",
-    "@types/node-fetch": "2.x",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "eslint": "^8.33.0",
-    "fast-check": "^3.6.3",
-    "jest": "^29.4.1",
-    "nodemon": "^2.0.20",
-    "porter-stemmer": "^0.9.1",
-    "stopword": "^2.0.7",
-    "ts-jest": "^29.0.5",
-    "typedoc": "^0.23.24",
-    "typescript": "^4.9.5"
-  },
-  "homepage": "https://github.com/olastor/picosearch#readme",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/olastor/picosearch"
-  },
-  "bugs": {
-    "url": "https://github.com/olastor/picosearch/issues"
-  },
-  "dependencies": {}
+    "@biomejs/biome": "^1.9.4",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.13.10",
+    "fast-check": "^4.0.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8",
+    "@picosearch/picosearch": "workspace: *",
+    "@picosearch/language-english": "workspace: *"
+  }
 }

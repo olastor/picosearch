@@ -1,4 +1,4 @@
-testdata/benchmark
+packages/picosearch/benchmark/data
 docs
 
 # Logs
