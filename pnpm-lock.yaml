@@ -59,11 +59,8 @@ importers:
   packages/picosearch:
     devDependencies:
       '@picosearch/language-english':
-        specifier: workspace:*
+        specifier: 'workspace: *'
         version: link:../language-english
-      '@picosearch/language-german':
-        specifier: workspace:*
-        version: link:../language-german
       '@types/unzipper':
         specifier: ^0.10.11
         version: 0.10.11
