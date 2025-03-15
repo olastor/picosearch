@@ -31,7 +31,7 @@ const documents: MyDoc[] = [
   { id: '3', text: 'Bright blue sky', additionalText: 'Clear and sunny day' },
 ];
 
-const pico = new Picosearch<Doc>();
+const pico = new Picosearch<MyDoc>();
 pico.insertMultipleDocuments(documents);
 console.log(pico.searchDocuments('jump sun'));
 // returns
