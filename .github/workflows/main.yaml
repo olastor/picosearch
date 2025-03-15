@@ -25,9 +25,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-          cache-dependency-path: "packages/${{ matrix.package }}/pnpm-lock.yaml"
+          cache-dependency-path: "pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
-        working-directory: packages/${{ matrix.package }}
+      - run: |
+          for dir in packages/*; do
+            (cd "$dir" && pnpm build)
+          done
       - run: pnpm run lint
         working-directory: packages/${{ matrix.package }}
       - run: pnpm run type-check
@@ -50,7 +53,10 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "packages/picosearch/pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
-        working-directory: packages/picosearch
+      - run: |
+          for dir in packages/*; do
+            (cd "$dir" && pnpm build)
+          done
       - run: pnpm run benchmark
         working-directory: packages/picosearch
       - name: Cache benchmark data
