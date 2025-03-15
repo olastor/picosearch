@@ -17,9 +17,10 @@
   "author": "Sebastian Kussl",
   "license": "MIT",
   "devDependencies": {
-    "unzipper": "^0.12.3",
+    "@picosearch/language-english": "workspace:*",
     "@picosearch/language-german": "workspace:*",
-    "@picosearch/language-english": "workspace:*"
+    "@types/unzipper": "^0.10.11",
+    "unzipper": "^0.12.3"
   },
   "homepage": "https://github.com/olastor/picosearch#readme",
   "repository": {

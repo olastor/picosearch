@@ -60,6 +60,9 @@ importers:
       '@picosearch/language-german':
         specifier: workspace:*
         version: link:../language-german
+      '@types/unzipper':
+        specifier: ^0.10.11
+        version: 0.10.11
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -378,6 +381,9 @@ packages:
 
   '@types/stopword@2.0.3':
     resolution: {integrity: sha512-hioMj0lOvISM+EDevf7ijG8EMbU+J3pj4SstCyfQC1t39uPYpAe7beSfBdU6c1d9jeECTQQtR3UJWtVoUO8Weg==}
+
+  '@types/unzipper@0.10.11':
+    resolution: {integrity: sha512-D25im2zjyMCcgL9ag6N46+wbtJBnXIr7SI4zHf9eJD2Dw2tEB5e+p5MYkrxKIVRscs5QV0EhtU9rgXSPx90oJg==}
 
   '@vitest/expect@3.0.8':
     resolution: {integrity: sha512-Xu6TTIavTvSSS6LZaA3EebWFr6tsoXPetOWNMOlc7LO88QVVBwq2oQWBoDiLCN6YTvNYsGSjqOO8CAdjom5DCQ==}
@@ -850,6 +856,10 @@ snapshots:
       undici-types: 6.20.0
 
   '@types/stopword@2.0.3': {}
+
+  '@types/unzipper@0.10.11':
+    dependencies:
+      '@types/node': 22.13.10
 
   '@vitest/expect@3.0.8':
     dependencies:

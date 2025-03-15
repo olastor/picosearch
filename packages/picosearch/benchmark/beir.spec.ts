@@ -8,7 +8,7 @@ import { Picosearch } from '../src/';
 
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
-import * as englishOptions from '../../language-english/src/index.ts';
+import * as englishOptions from '@picosearch/language-english';
 import type { SearchResult } from '../src/interfaces.ts';
 
 const downloadAndExtractCorpus = async (corpusName: string): Promise<void> => {
