@@ -34,6 +34,8 @@ pico.insertMultipleDocuments(documents);
 console.log(pico.searchDocuments('jump sun'));
 ```
 
+Please note that currently, a document must be flat and can only contain string values, and needs an `id` field (also a string)!
+
 ## Language-specific Preprocessing
 
 By default, only a generic preprocessing is being done (simple regex tokenizer + lowercasing). It is **highly recommended** to replace this with language-specific options. Currently, the following languages have an additional package for pre-processing:
