@@ -11,9 +11,6 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
-      '@picosearch/language-english':
-        specifier: 'workspace: *'
-        version: link:packages/language-english
       '@picosearch/picosearch':
         specifier: 'workspace: *'
         version: link:packages/picosearch
