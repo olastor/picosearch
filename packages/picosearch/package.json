@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest src/",
-    "benchmark": "vitest --hookTimeout 60000 --testTimeout 60000 benchmark/",
+    "benchmark": "vitest --hookTimeout 120000 --testTimeout 60000 benchmark/",
     "lint": "biome check",
     "type-check": "tsc"
   },
