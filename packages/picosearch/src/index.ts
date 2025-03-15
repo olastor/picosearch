@@ -12,12 +12,17 @@ import type {
   Tokenizer,
 } from './interfaces';
 import { Trie } from './trie';
-import { parseFieldNameAndWeight } from './util';
+import {
+  expandTrieNode,
+  minifyTrieNode,
+  parseFieldNameAndWeight,
+} from './util';
 
 export const defaultTokenizer: Tokenizer = (doc: string): string[] =>
   doc.match(/\w+/g) || [];
 
-export const defaultAnalyzer: Analyzer = (token: string): string => token;
+export const defaultAnalyzer: Analyzer = (token: string): string =>
+  token.toLowerCase();
 
 export type {
   Analyzer,
@@ -51,7 +56,12 @@ export class Picosearch<T extends PicosearchDocument>
     if (jsonIndex) {
       const { opts, index } = JSON.parse(jsonIndex) as SerializedInstance<T>;
       this.keepDocuments = opts.keepDocuments ?? true;
-      this.searchIndex = index;
+      this.searchIndex = {
+        ...index,
+        docFreqsByToken: new Trie(
+          expandTrieNode<[number, number, number]>(index.docFreqsByToken),
+        ),
+      };
       return;
     }
     if (typeof keepDocuments === 'boolean') this.keepDocuments = keepDocuments;
@@ -167,7 +177,12 @@ export class Picosearch<T extends PicosearchDocument>
 
   toJSON(): string {
     const jsonObj: SerializedInstance<T> = {
-      index: this.searchIndex,
+      index: {
+        ...this.searchIndex,
+        docFreqsByToken: minifyTrieNode<[number, number, number]>(
+          this.searchIndex.docFreqsByToken.getRoot(),
+        ),
+      },
       opts: {
         keepDocuments: this.keepDocuments,
       },

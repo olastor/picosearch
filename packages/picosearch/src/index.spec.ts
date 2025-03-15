@@ -83,4 +83,32 @@ describe('Picosearch', () => {
     expect(results[1].doc.title).toBe('greetings world');
     expect(results[0].score).toBeGreaterThan(results[1].score);
   });
+
+  test('export/import does not affect search', () => {
+    const documents = [
+      { id: '1', title: 'greetings world', content: 'hello' },
+      { id: '2', title: 'farewell', content: 'goodbye world' },
+    ];
+    searchIndex.insertMultipleDocuments(documents);
+
+    const newSearchIndex = new Picosearch({ jsonIndex: searchIndex.toJSON() });
+    const results = newSearchIndex.searchDocuments('world', {
+      fields: ['title', 'content^2'],
+    });
+    expect(results[0].doc.title).toBe('farewell');
+    expect(results[1].doc.title).toBe('greetings world');
+    expect(results[0].score).toBeGreaterThan(results[1].score);
+  });
+
+  test('exporting twice results in the same JSON string', () => {
+    const documents = [
+      { id: '1', title: 'greetings world', content: 'hello' },
+      { id: '2', title: 'farewell', content: 'goodbye world' },
+    ];
+    searchIndex.insertMultipleDocuments(documents);
+
+    const json = searchIndex.toJSON();
+    const index2 = new Picosearch({ jsonIndex: searchIndex.toJSON() });
+    expect(index2.toJSON()).toEqual(json);
+  });
 });

@@ -1,4 +1,4 @@
-import type { ITrie, TrieNode } from './interfaces';
+import type { ITrie, TrieNode, TrieNodeMinified } from './interfaces';
 import { getJsonKeyReplacer, getJsonKeyReviver } from './util';
 
 const getNewEmptyNode = <T>(): TrieNode<T> => ({
@@ -16,6 +16,10 @@ export class Trie<T> implements ITrie<T> {
 
   constructor(root = getNewEmptyNode<T>()) {
     this.root = root;
+  }
+
+  getRoot(): TrieNode<T> {
+    return this.root;
   }
 
   insert(sequence: string[], values: T[]): void {

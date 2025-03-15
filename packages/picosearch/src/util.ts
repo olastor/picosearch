@@ -1,3 +1,32 @@
+import type { TrieNode, TrieNodeMinified } from './interfaces';
+
+export const invertMapping = (
+  mapping: Record<string, string>,
+): Record<string, string> =>
+  Object.fromEntries(Object.entries(mapping).map(([k, v]) => [v, k]));
+
+export const minifyTrieNode = <T>(node: TrieNode<T>): TrieNodeMinified<T> => {
+  const newNode = {
+    c: {} as { [part: string]: TrieNodeMinified<T> },
+    v: node.values,
+  };
+  for (const [str, child] of Object.entries(node.children)) {
+    newNode.c[str] = minifyTrieNode(child);
+  }
+  return newNode;
+};
+
+export const expandTrieNode = <T>(node: TrieNodeMinified<T>): TrieNode<T> => {
+  const newNode = {
+    children: {} as { [part: string]: TrieNode<T> },
+    values: node.v,
+  };
+  for (const [str, child] of Object.entries(node.c)) {
+    newNode.children[str] = expandTrieNode(child);
+  }
+  return newNode;
+};
+
 export const getJsonKeyReplacer =
   (keyMapping: Record<string, string>) =>
   (key: string, value: any): any => {
@@ -11,9 +40,7 @@ export const getJsonKeyReplacer =
   };
 
 export const getJsonKeyReviver = (keyMapping: Record<string, string>) => {
-  const invertedMapping = Object.fromEntries(
-    Object.entries(keyMapping).map(([k, v]) => [v, k]),
-  );
+  const invertedMapping = invertMapping(keyMapping);
   return (key: string, value: any): any => {
     if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
       return Object.fromEntries(

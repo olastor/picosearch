@@ -5,7 +5,13 @@ export type TrieNode<T> = {
   values: T[];
 };
 
+export type TrieNodeMinified<T> = {
+  c: { [part: string]: TrieNodeMinified<T> };
+  v: T[];
+};
+
 export interface ITrie<T> {
+  getRoot: () => TrieNode<T>;
   insert: (sequence: string[], values: T[]) => void;
   search: (sequence: string[]) => T[] | null;
   toJSON: () => string;
@@ -75,6 +81,8 @@ export type Analyzer = (token: string) => string;
 export type Tokenizer = (doc: string) => string[];
 
 export type SerializedInstance<T extends PicosearchDocument> = {
-  index: SearchIndex<T>;
+  index: Omit<SearchIndex<T>, 'docFreqsByToken'> & {
+    docFreqsByToken: TrieNodeMinified<[number, number, number]>;
+  };
   opts: Omit<PicosearchOptions, 'tokenizer' | 'analyzer' | 'jsonIndex'>;
 };
