@@ -7,6 +7,7 @@ describe('scoreBM25F', () => {
     interface TestDoc extends PicosearchDocument {}
     const queryTokens = ['test'];
     const index: Partial<SearchIndex<TestDoc>> = {
+      originalDocumentIds: ['0', '1'],
       docCountsByFieldId: [2],
       totalDocLengthsByFieldId: [100],
       docFreqsByToken: {
@@ -30,5 +31,8 @@ describe('scoreBM25F', () => {
       b,
     );
     expect(results).toHaveLength(2);
+    expect(results[0].id).toEqual('1');
+    expect(results[1].id).toEqual('0');
+    expect(results[0].score).toBeGreaterThan(results[1].score);
   });
 });
