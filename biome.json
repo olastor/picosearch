@@ -7,7 +7,13 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["dist", "out", "data", "public"]
+    "ignore": [
+      "dist",
+      "out",
+      "data",
+      "public",
+      "package.json"
+    ]
   },
   "formatter": {
     "enabled": true,
