@@ -34,7 +34,7 @@ pico.insertMultipleDocuments(documents);
 console.log(pico.searchDocuments('jump sun'));
 ```
 
-Please note that currently, a document must be flat and can only contain string values, and needs an `id` field (also a string)!
+Please note that currently, a document must be flat, can only contain string values, and needs an `id` field (also a string)!
 
 ## Language-specific Preprocessing
 
