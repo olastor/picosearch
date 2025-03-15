@@ -78,7 +78,7 @@ const pico = new Picosearch({
 
 ## JSON Serialization
 
-Indexes can be exported to and imported from JSON-serializable objects. This is useful, for example, for performing the more compute-heavy indexing offline when the search runtime is in the browser. It is very important that you **pass the same tokenizer and analyzer in the new instance** and don't change any other constructor options. Here's an example:
+Indexes can be exported to and imported from JSON. This is useful, for example, for performing the more compute-heavy indexing offline when the search runtime is in the browser. It is very important that you **pass the same tokenizer and analyzer in the new instance** and don't change any other constructor options. Here's an example:
 
 ```typescript
 import { Picosearch } from '@picosearch/picosearch';
