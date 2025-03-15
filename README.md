@@ -2,11 +2,11 @@
 
 Minimalistic full-text search implemented in Typescript.
 
-&nbsp;&nbsp;&nbsp;&nbsp;🔎 Full text search using the BM25F algorithm for multi-field matching (also used in Lucene, Elasticsearch etc.) <br />
-&nbsp;&nbsp;&nbsp;&nbsp;🈯 Fully typed with TypeScript for robust development <br />
-&nbsp;&nbsp;&nbsp;&nbsp;🧐 Benchmark tests in CI/CD to ensure optimal search performance <br />
-&nbsp;&nbsp;&nbsp;&nbsp;♻️ JSON-serializable indexes for seamless export and import <br />
-&nbsp;&nbsp;&nbsp;&nbsp;🌑 Zero runtime dependencies in the core package <br />
+&nbsp;&nbsp;&nbsp;&nbsp;🔎 Full text search using the BM25F algorithm for multi-field matching <br />
+&nbsp;&nbsp;&nbsp;&nbsp;🈯 Fully typed with TypeScript <br />
+&nbsp;&nbsp;&nbsp;&nbsp;🧐 Benchmark tests in CI/CD <br />
+&nbsp;&nbsp;&nbsp;&nbsp;♻️ JSON-serializable indexes <br />
+&nbsp;&nbsp;&nbsp;&nbsp;🌑 Zero runtime dependencies (in the core package) <br />
 
 ## Installation
 
