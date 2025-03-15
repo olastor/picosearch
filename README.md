@@ -1,10 +1,12 @@
 # picosearch
 
-Minimalistic, customizable module for creating basic full-text search indices and queries using the BM25F algorithm (used by Lucene, Elasticsearch etc.). The focus is on providing a simple and reusable implementation and configuration with no dependencies.
+Minimalistic full-text search implemented in Typescript.
 
-- Fully typed with TypeScript for robust development
-- Benchmark tests in CI/CD to ensure optimal search performance
-- JSON-serializable indexes for seamless export and import
+🔎 Full text search using the BM25F algorithm for multi-field matching (also used in Lucene, Elasticsearch etc.)
+🈯 Fully typed with TypeScript for robust development
+🧐 Benchmark tests in CI/CD to ensure optimal search performance
+♻️ JSON-serializable indexes for seamless export and import
+🌑 Zero runtime dependencies in the core package
 
 ## Installation
 
