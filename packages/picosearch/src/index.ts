@@ -169,9 +169,10 @@ export class Picosearch<T extends PicosearchDocument>
     const k1 = options?.bm25?.k1 ?? DEFAULT_QUERY_OPTIONS.bm25.k1;
     const b = options?.bm25?.b ?? DEFAULT_QUERY_OPTIONS.bm25.b;
 
+    const offset = options.offset ?? 0;
     return scoreBM25F<T>(tokens, this.searchIndex, fieldWeights, k1, b).slice(
-      options.offset ?? 0,
-      options?.limit,
+      offset,
+      options?.limit ? offset + options.limit : undefined,
     );
   }
 
