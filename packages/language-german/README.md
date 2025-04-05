@@ -16,3 +16,7 @@ This function processes a single token by removing punctuation and converting it
 
 - `cistem`: A module for stemming German words.
 - `stopword`: A library containing a list of stopwords for various languages, including German.
+
+# Attributions
+
+- CISTEM: Leonie Weißweiler, MIT (https://github.com/LeonieWeissweiler/CISTEM)
