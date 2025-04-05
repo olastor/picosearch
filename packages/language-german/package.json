@@ -1,7 +1,7 @@
 {
   "name": "@picosearch/language-german",
   "version": "1.0.0",
-  "description": "",
+  "description": "German text preprocessor for picosearch.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -15,11 +15,18 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "stopword": "^3.1.4"
   },
   "devDependencies": {
     "@types/stopword": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olastor/picosearch"
+  },
+  "bugs": {
+    "url": "https://github.com/olastor/picosearch/issues"
   }
 }
