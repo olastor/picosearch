@@ -13,10 +13,6 @@ jobs:
     strategy:
       matrix:
         node-version: ["22"]
-        package: 
-          - picosearch
-          - language-english
-          - language-german
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -27,16 +23,9 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
-      - run: |
-          for dir in packages/*; do
-            (cd "$dir" && pnpm build)
-          done
-      - run: pnpm run lint
-        working-directory: packages/${{ matrix.package }}
-      - run: pnpm run type-check
-        working-directory: packages/${{ matrix.package }}
-      - run: pnpm run test
-        working-directory: packages/${{ matrix.package }}
+      - run: pnpm -r build
+      - run: pnpm -r lint
+      - run: pnpm -r type-check
 
   benchmark:
     runs-on: ubuntu-latest
@@ -53,10 +42,7 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: "packages/picosearch/pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
-      - run: |
-          for dir in packages/*; do
-            (cd "$dir" && pnpm build)
-          done
+      - run: pnpm -r build
       - run: pnpm run benchmark
         working-directory: packages/picosearch
       - name: Cache benchmark data
