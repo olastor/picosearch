@@ -73,7 +73,10 @@ jobs:
           cache-dependency-path: "pnpm-lock.yaml"
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r build
+      - name: Set publishing config
+        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
       - run: pnpm -r publish --provenance --no-git-checks --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
