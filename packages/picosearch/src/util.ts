@@ -39,19 +39,6 @@ export const getJsonKeyReplacer =
     return value;
   };
 
-export const getJsonKeyReviver = (keyMapping: Record<string, string>) => {
-  const invertedMapping = invertMapping(keyMapping);
-  return (key: string, value: any): any => {
-    if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-      return Object.fromEntries(
-        Object.entries(value).map(([k, v]) => [invertedMapping?.[k] ?? k, v]),
-      );
-    }
-
-    return value;
-  };
-};
-
 export const parseFieldNameAndWeight = (
   fieldNameWithOptionalWeight: string,
 ): [fieldName: string, weight: number] => {

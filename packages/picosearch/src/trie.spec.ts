@@ -60,14 +60,37 @@ describe('Trie', () => {
     expect(trie.search([])).toEqual([]);
   });
 
-  it('should convert to and from JSON', () => {
-    const trie = new Trie<number>();
-    trie.insert(['x', 'y', 'z'], [3]);
+  describe('JSON serialization', () => {
+    it('should convert to and from JSON', () => {
+      const trie = new Trie<number>();
+      trie.insert(['x', 'y', 'z'], [3]);
 
-    const jsonStr = trie.toJSON();
-    const newTrie = Trie.fromJSON<number>(jsonStr);
+      const jsonStr = trie.toJSON();
+      const newTrie = Trie.fromJSON<number>(jsonStr);
 
-    expect(newTrie.search(['x', 'y', 'z'])).toEqual([3]);
+      expect(newTrie.search(['x', 'y', 'z'])).toEqual([3]);
+    });
+
+    it('should not use reviver in chilldren object', () => {
+      const trie = new Trie<number>();
+      trie.insert(['x', 'v', 'c'], [3]);
+
+      const jsonStr = trie.toJSON();
+      const newTrie = Trie.fromJSON<number>(jsonStr);
+
+      expect(newTrie.getRoot()).toEqual(trie.getRoot());
+      expect(newTrie.getRoot()).toEqual({
+        children: {
+          x: {
+            children: {
+              v: { children: { c: { children: {}, values: [3] } }, values: [] },
+            },
+            values: [],
+          },
+        },
+        values: [],
+      });
+    });
   });
 
   describe('fuzzy search', () => {

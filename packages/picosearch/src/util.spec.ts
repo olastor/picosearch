@@ -27,28 +27,6 @@ describe('getJsonKeyReplacer', () => {
   });
 });
 
-describe('getJsonKeyReviver', () => {
-  it('should revive keys based on the mapping provided', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const reviver = getJsonKeyReviver(keyMapping);
-    const result = reviver('key', { newKey: 'value' });
-    expect(result).toEqual({ oldKey: 'value' });
-  });
-
-  it('should not alter keys with no reverse mapping', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const reviver = getJsonKeyReviver(keyMapping);
-    const result = reviver('key', { anotherKey: 'value' });
-    expect(result).toEqual({ anotherKey: 'value' });
-  });
-
-  it('should return value if it is not an object', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const reviver = getJsonKeyReviver(keyMapping);
-    expect(reviver('key', 'value')).toBe('value');
-  });
-});
-
 describe('parseFieldNameAndWeight', () => {
   it('should parse field name and weight correctly', () => {
     const result = parseFieldNameAndWeight('field^2.5');

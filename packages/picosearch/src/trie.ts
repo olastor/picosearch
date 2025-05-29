@@ -151,7 +151,13 @@ export class Trie<T> implements ITrie<T> {
   }
 
   static fromJSON<T>(jsonStr: string): Trie<T> {
-    const root = JSON.parse(jsonStr, getJsonKeyReviver(JSON_KEY_MAP));
+    const invertMap = (obj: TrieNodeMinified<T>): TrieNode<T> => ({
+      children: Object.fromEntries(
+        Object.entries(obj.c).map(([k, v]) => [k, invertMap(v)]),
+      ),
+      values: obj.v,
+    });
+    const root = invertMap(JSON.parse(jsonStr));
     return new Trie<T>(root);
   }
 }
