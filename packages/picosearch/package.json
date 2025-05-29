@@ -1,6 +1,6 @@
 {
   "name": "@picosearch/picosearch",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Minimalistic full-text search, zero dependencies, local-first, browser-compatible.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
