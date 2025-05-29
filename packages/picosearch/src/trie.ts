@@ -4,7 +4,7 @@ import type {
   TrieNode,
   TrieNodeMinified,
 } from './interfaces';
-import { getJsonKeyReplacer, getJsonKeyReviver } from './util';
+import { getJsonKeyReplacer } from './util';
 
 const getNewEmptyNode = <T>(): TrieNode<T> => ({
   children: {} as TrieNode<T>['children'],

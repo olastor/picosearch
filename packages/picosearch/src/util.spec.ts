@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  getJsonKeyReplacer,
-  getJsonKeyReviver,
-  parseFieldNameAndWeight,
-} from './util';
+import { getJsonKeyReplacer, parseFieldNameAndWeight } from './util';
 
 describe('getJsonKeyReplacer', () => {
   it('should replace keys based on the mapping provided', () => {
