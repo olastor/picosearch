@@ -5,6 +5,12 @@ export type TrieNode<T> = {
   values: T[];
 };
 
+export type TrieFuzzyMatch<T> = {
+  match: string;
+  distance: number;
+  values: T[];
+};
+
 export type TrieNodeMinified<T> = {
   c: { [part: string]: TrieNodeMinified<T> };
   v: T[];

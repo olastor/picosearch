@@ -11,6 +11,9 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
+      '@fast-check/vitest':
+        specifier: ^0.2.1
+        version: 0.2.1(vitest@3.1.1(@types/node@22.14.0))
       '@picosearch/picosearch':
         specifier: 'workspace: *'
         version: link:packages/picosearch
@@ -269,6 +272,11 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@fast-check/vitest@0.2.1':
+    resolution: {integrity: sha512-qbmGd1PC38iGvDjAY3WCpfQbWl60Bh0S5A/P60bFTVobyXzhYwq/3AtqVJWMRLnKHSfCDc2CSAApRUqrhVfcZQ==}
+    peerDependencies:
+      vitest: ^1 || ^2 || ^3
 
   '@jridgewell/sourcemap-codec@1.5.0':
     resolution: {integrity: sha512-gv3ZRaISU3fjPAgNsriBRqGWQL6quFx04YMPW/zD8XMLsU32mhCCbfbO6KZFLjvYpCZ8zyDEgqsgf+PwPaM7GQ==}
@@ -788,6 +796,11 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.1':
     optional: true
+
+  '@fast-check/vitest@0.2.1(vitest@3.1.1(@types/node@22.14.0))':
+    dependencies:
+      fast-check: 4.0.1
+      vitest: 3.1.1(@types/node@22.14.0)
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
