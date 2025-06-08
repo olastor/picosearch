@@ -256,10 +256,25 @@ export class Picosearch<T extends PicosearchDocument>
     const b = options?.bm25?.b ?? DEFAULT_QUERY_OPTIONS.bm25.b;
 
     const offset = options.offset ?? 0;
-    return scoreBM25F<T>(tokens, this.searchIndex, fieldWeights, k1, b).slice(
-      offset,
-      options?.limit ? offset + options.limit : undefined,
-    );
+    const results = scoreBM25F<T>(
+      tokens,
+      this.searchIndex,
+      fieldWeights,
+      k1,
+      b,
+    ).slice(offset, options?.limit ? offset + options.limit : undefined);
+
+    const { docsById, originalDocumentIds } = this.searchIndex;
+    return options?.includeDocs
+      ? results.map(([internalId, score]) => ({
+          id: originalDocumentIds[internalId],
+          score,
+          doc: docsById[internalId],
+        }))
+      : results.map(([internalId, score]) => ({
+          id: originalDocumentIds[internalId],
+          score,
+        }));
   }
 
   /**

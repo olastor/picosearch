@@ -128,6 +128,7 @@ describe('getBKChild', () => {
 describe('addRadixChild', () => {
   it('should add a radix child to the parent node', () => {
     const parent = {} as RadixBKTreeMapNode<string>;
+    // @ts-expect-error
     const child = { [NODE_KEYS.IS_ROOT]: false } as RadixBKTreeMapNode<string>;
 
     addRadixChild(parent, 'test', child);
@@ -177,10 +178,12 @@ describe('getNodeWord', () => {
   it('should return the full word by traversing up the tree', () => {
     const grandparent = {} as RadixBKTreeMapNode<string>;
     const parentEdge = [grandparent, 'par', undefined] as const;
+    // @ts-expect-error
     const parent = {
       [NODE_KEYS.PARENT]: parentEdge,
     } as RadixBKTreeMapNode<string>;
     const childEdge = [parent, 'ent', undefined] as const;
+    // @ts-expect-error
     const child = {
       [NODE_KEYS.PARENT]: childEdge,
     } as RadixBKTreeMapNode<string>;
@@ -264,6 +267,7 @@ describe('toMinifiedNode / fromMinifiedNode', () => {
     const radixChild = restored.r?.[0][2];
     const bkChild = restored.k?.[1];
     expect(radixChild).toBe(bkChild);
+    // @ts-expect-error
     expect(radixChild.v).toEqual(['shared']);
   });
 

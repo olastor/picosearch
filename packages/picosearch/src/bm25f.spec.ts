@@ -5,7 +5,7 @@ import type { PicosearchDocument, SearchIndex } from './types';
 describe('scoreBM25F', () => {
   it('calculates scores for documents correctly', () => {
     interface TestDoc extends PicosearchDocument {}
-    const queryTokens = ['test'];
+    const queryTokens = new Set(['test']);
     const index: Partial<SearchIndex<TestDoc>> = {
       originalDocumentIds: ['0', '1'],
       docCountsByFieldId: [2],
@@ -31,8 +31,8 @@ describe('scoreBM25F', () => {
       b,
     );
     expect(results).toHaveLength(2);
-    expect(results[0].id).toEqual('1');
-    expect(results[1].id).toEqual('0');
-    expect(results[0].score).toBeGreaterThan(results[1].score);
+    expect(results[0][0]).toEqual(1);
+    expect(results[1][0]).toEqual(0);
+    expect(results[0][1]).toBeGreaterThan(results[1][0]);
   });
 });

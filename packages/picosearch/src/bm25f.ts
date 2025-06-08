@@ -15,7 +15,7 @@ export const scoreBM25F = <T extends PicosearchDocument>(
   fieldWeights: { [fieldId: number]: number },
   k1: number,
   b: number,
-): SearchResult[] => {
+): [internalId: number, score: number][] => {
   const docScores: { [doc: number]: number } = {};
 
   const selectedFieldIds = Object.entries(fieldWeights)
@@ -69,9 +69,5 @@ export const scoreBM25F = <T extends PicosearchDocument>(
 
   return Object.entries(docScores)
     .sort((a, b) => b[1] - a[1])
-    .map(([id, score]) => ({
-      id: index.originalDocumentIds[Number(id)],
-      score,
-      doc: index.docsById?.[Number(id)],
-    }));
+    .map(([id, score]) => [Number(id), score]);
 };

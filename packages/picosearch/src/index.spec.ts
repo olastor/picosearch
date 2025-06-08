@@ -6,6 +6,7 @@ import type {
   PicosearchDocument,
   QueryOptions,
   SearchResult,
+  SearchResultWithDoc,
 } from './types';
 
 describe('Picosearch', () => {
@@ -27,9 +28,7 @@ describe('Picosearch', () => {
     it('insertDocument successfully adds a document', () => {
       const document = { id: '1', content: 'hello world' };
       searchIndex.insertDocument(document);
-      expect(
-        searchIndex.searchDocuments('hello', {} as QueryOptions).length,
-      ).toBe(1);
+      expect(searchIndex.searchDocuments('hello').length).toBe(1);
     });
 
     it('insertMultipleDocuments adds multiple documents', () => {
@@ -57,8 +56,8 @@ describe('Picosearch', () => {
     it('searchDocuments can find inserted documents', () => {
       const document = { id: '1', content: 'hello world' };
       searchIndex.insertDocument(document);
-      const results: SearchResult<PicosearchDocument>[] =
-        searchIndex.searchDocuments('hello', {} as QueryOptions);
+      const results: SearchResultWithDoc<PicosearchDocument>[] =
+        searchIndex.searchDocuments('hello', { includeDocs: true });
       expect(results[0].doc.id).toBe(document.id);
     });
 
@@ -68,7 +67,8 @@ describe('Picosearch', () => {
       expect(() =>
         searchIndex.searchDocuments('hello', {
           fields: ['unknown'],
-        } as QueryOptions),
+          includeDocs: true,
+        }),
       ).toThrow(`Unknown field 'unknown'!`);
     });
 
@@ -80,6 +80,7 @@ describe('Picosearch', () => {
       searchIndex.insertMultipleDocuments(documents);
       const results = searchIndex.searchDocuments('world', {
         fields: ['title', 'content'],
+        includeDocs: true,
       });
       expect(results.length).toBe(2);
       expect(results[0].doc.title).toBe('greetings world');
@@ -95,6 +96,7 @@ describe('Picosearch', () => {
       searchIndex.insertMultipleDocuments(documents);
       const results = searchIndex.searchDocuments('world', {
         fields: ['title', 'content^2'],
+        includeDocs: true,
       });
       expect(results[0].doc.title).toBe('farewell');
       expect(results[1].doc.title).toBe('greetings world');

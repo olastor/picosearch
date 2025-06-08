@@ -76,6 +76,7 @@ describe('RadixBKTreeMap', () => {
         const radix = new RadixBKTreeMap<number>();
         corpus.forEach((word) => radix.insert(word, 0));
         let ok = true;
+        // @ts-expect-error
         traverseRadix(radix.root, (node) => {
           const firstChars = Object.keys(
             node[NODE_KEYS.RADIX_CHILDREN] || {},
@@ -396,6 +397,7 @@ describe('RadixBKTreeMap', () => {
         corpus.forEach((word, i) => radix.insert(word, i));
         const newRadix = RadixBKTreeMap.fromJSON<number>(radix.toJSON());
 
+        // @ts-expect-error
         expect(isEqualTreeStrict(radix.root, newRadix.root)).toEqual(true);
       },
     );
