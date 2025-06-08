@@ -173,7 +173,7 @@ describe('Trie', () => {
     });
   });
 
-  describe.only('toJSON + fromJSON', () => {
+  describe('toJSON + fromJSON', () => {
     it('should convert to and from JSON', () => {
       const trie = new Trie();
       trie.insert('xyz');
