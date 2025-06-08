@@ -153,15 +153,17 @@ export class Picosearch<T extends PicosearchDocument>
         this.searchIndex.termTree.insertNoFuzzy(token, tokenInfo);
       }
 
-      for (const rawToken of fieldTokensRaw) {
-        // raw tokens are indexed only for fuzzy search / autocomplete
-        // make sure they are marked with 1
-        const rawTokenLower = rawToken.toLowerCase();
-        this.searchIndex.termTree.insert(rawTokenLower);
-        const node = this.searchIndex.termTree.lookup(rawTokenLower, true);
-        assert(!!node, 'node is undefined');
-        node.v ??= [];
-        if (node.v[0] !== 1) node.v.unshift(1);
+      if (this.enableAutocomplete) {
+        for (const rawToken of fieldTokensRaw) {
+          // raw tokens are indexed only for fuzzy search / autocomplete
+          // make sure they are marked with 1
+          const rawTokenLower = rawToken.toLowerCase();
+          this.searchIndex.termTree.insert(rawTokenLower);
+          const node = this.searchIndex.termTree.lookup(rawTokenLower, true);
+          assert(!!node, 'node is undefined');
+          node.v ??= [];
+          if (node.v[0] !== 1) node.v.unshift(1);
+        }
       }
     }
 

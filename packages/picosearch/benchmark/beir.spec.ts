@@ -105,7 +105,11 @@ const evaluateDataset = (corpusName: string): number => {
 
   const indexTag = `Indexing Time (${corpusName})`;
   console.time(indexTag);
-  const index = new Picosearch({ ...englishOptions, keepDocuments: false });
+  const index = new Picosearch({
+    ...englishOptions,
+    keepDocuments: false,
+    enableAutocomplete: false,
+  });
   index.insertMultipleDocuments(docs);
   console.timeEnd(indexTag);
 
