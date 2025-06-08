@@ -1,6 +1,6 @@
 {
   "name": "@picosearch/picosearch",
-  "version": "2.0.1",
+  "version": "3.0.0-rc.1",
   "description": "Minimalistic full-text search, zero dependencies, local-first, browser-compatible.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,13 +10,17 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "test": "vitest src/",
-    "benchmark": "vitest --hookTimeout 120000 --testTimeout 60000 benchmark/",
+    "benchmark": "vitest --hookTimeout 300000 --testTimeout 300000 benchmark/",
     "lint": "biome check",
     "type-check": "tsc"
   },
   "author": "Sebastian Kussl",
   "license": "MIT",
+  "dependencies": {
+    "@picosearch/radix-bk-tree": "workspace: *"
+  },
   "devDependencies": {
+    "@fast-check/vitest": "^0.2.1",
     "@picosearch/language-english": "workspace: *",
     "@types/unzipper": "^0.10.11",
     "unzipper": "^0.12.3"

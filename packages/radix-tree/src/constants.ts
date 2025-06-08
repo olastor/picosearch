@@ -1,0 +1,1 @@
+export const FUZZY_SEARCH_DEFAULT_MAX_ERROR = 2;

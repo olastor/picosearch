@@ -1,8 +1,4 @@
-import type {
-  PicosearchDocument,
-  SearchIndex,
-  SearchResult,
-} from './interfaces';
+import type { PicosearchDocument, SearchIndex, SearchResult } from './types';
 
 /**
  * Calculates scores for documents matching the query tokens and returns a ranked list of most
@@ -14,12 +10,12 @@ import type {
  * [3] https://arxiv.org/pdf/0911.5046.pdf
  */
 export const scoreBM25F = <T extends PicosearchDocument>(
-  queryTokens: string[],
+  queryTokens: Set<string>,
   index: SearchIndex<T>,
   fieldWeights: { [fieldId: number]: number },
   k1: number,
   b: number,
-): SearchResult<T>[] => {
+): SearchResult[] => {
   const docScores: { [doc: number]: number } = {};
 
   const selectedFieldIds = Object.entries(fieldWeights)
@@ -39,21 +35,23 @@ export const scoreBM25F = <T extends PicosearchDocument>(
     .reduce((acc, x) => acc + x, 0);
 
   for (const token of queryTokens) {
-    const sequence = token.split('');
     const dlTilde: { [docId: number]: number } = {};
     const tfTilde: { [docId: number]: number } = {};
     const docIds = new Set<number>();
 
-    for (const [docId, fieldId, frequency] of index.docFreqsByToken.search(
-      sequence,
-    )) {
-      if (!selectedFieldIds.includes(fieldId)) continue;
-      docIds.add(docId);
-      tfTilde[docId] =
-        (tfTilde[docId] || 0) + fieldWeights[fieldId] * frequency;
-      dlTilde[docId] =
-        (dlTilde[docId] || 0) +
-        fieldWeights[fieldId] * index.docLengths[docId][fieldId];
+    const result = index.termTree.lookup(token);
+    if (result) {
+      for (const item of result) {
+        if (item === 1) continue;
+        const [docId, fieldId, frequency] = item;
+        if (!selectedFieldIds.includes(fieldId)) continue;
+        docIds.add(docId);
+        tfTilde[docId] =
+          (tfTilde[docId] || 0) + fieldWeights[fieldId] * frequency;
+        dlTilde[docId] =
+          (dlTilde[docId] || 0) +
+          fieldWeights[fieldId] * index.docLengths[docId][fieldId];
+      }
     }
 
     const df = docIds.size;

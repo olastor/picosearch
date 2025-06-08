@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { scoreBM25F } from './bm25f';
-import type { PicosearchDocument, SearchIndex } from './interfaces';
+import type { PicosearchDocument, SearchIndex } from './types';
 
 describe('scoreBM25F', () => {
   it('calculates scores for documents correctly', () => {
@@ -10,8 +10,8 @@ describe('scoreBM25F', () => {
       originalDocumentIds: ['0', '1'],
       docCountsByFieldId: [2],
       totalDocLengthsByFieldId: [100],
-      docFreqsByToken: {
-        search: () => [
+      termTree: {
+        lookup: () => [
           [0, 0, 1],
           [1, 0, 2],
         ],

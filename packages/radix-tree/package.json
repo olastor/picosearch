@@ -1,0 +1,35 @@
+{
+  "name": "@picosearch/radix-tree",
+  "version": "0.1.0",
+  "description": "Simple, zero dependency, type-safe implementation of a radix tree data structure.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest",
+    "lint": "biome check",
+    "type-check": "tsc"
+  },
+  "keywords": [
+    "radix-tree",
+    "radix-tree-map",
+    "radix-trie",
+    "radix-trie-map",
+    "trie",
+    "prefix-tree"
+  ],
+  "author": "Sebastian Kussl",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olastor/picosearch"
+  },
+  "bugs": {
+    "url": "https://github.com/olastor/picosearch/issues"
+  }
+}

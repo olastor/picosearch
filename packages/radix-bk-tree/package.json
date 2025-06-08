@@ -1,0 +1,33 @@
+{
+  "name": "@picosearch/radix-bk-tree",
+  "version": "0.1.0",
+  "description": "Zero dependency, type-safe implementation data structure that mixes the properties of a radix tree and a BK-Tree.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest",
+    "lint": "biome check",
+    "type-check": "tsc"
+  },
+  "keywords": [
+    "radix-bk-tree-map",
+    "prefix-tree",
+    "fuzzy-search",
+    "prefix-search"
+  ],
+  "author": "Sebastian Kussl",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olastor/picosearch"
+  },
+  "bugs": {
+    "url": "https://github.com/olastor/picosearch/issues"
+  }
+}

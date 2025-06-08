@@ -1,0 +1,33 @@
+{
+  "name": "@picosearch/bk-tree",
+  "version": "1.0.0",
+  "description": "Simple, zero dependency, type-safe implementation of a BK-Tree data structure.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest",
+    "lint": "biome check",
+    "type-check": "tsc"
+  },
+  "keywords": [
+    "BK-Tree",
+    "BK-trie",
+    "BK-tree",
+    "fuzzy-search"
+  ],
+  "author": "Sebastian Kussl",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/olastor/picosearch"
+  },
+  "bugs": {
+    "url": "https://github.com/olastor/picosearch/issues"
+  }
+}

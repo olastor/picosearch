@@ -1,26 +1,35 @@
+import { RadixBKTreeMap } from '@picosearch/radix-bk-tree';
 import { scoreBM25F } from './bm25f';
-import { DEFAULT_QUERY_OPTIONS } from './constants';
+import {
+  DEFAULT_AUTOCOMPLETE_OPTIONS,
+  DEFAULT_QUERY_OPTIONS,
+} from './constants';
 import type {
   Analyzer,
+  AutocompleteOptions,
   IPicosearch,
   PicosearchDocument,
   PicosearchOptions,
   QueryOptions,
+  RawTokenMarker,
   SearchIndex,
   SearchResult,
+  SearchResultWithDoc,
   SerializedInstance,
+  TokenInfo,
   Tokenizer,
-} from './interfaces';
-import { Trie } from './trie';
-import {
-  expandTrieNode,
-  minifyTrieNode,
-  parseFieldNameAndWeight,
-} from './util';
+} from './types';
+import { assert, getAutoFuzziness, parseFieldNameAndWeight } from './util';
 
+/**
+ * The default tokenizer, which splits the document into words by matching \w+.
+ */
 export const defaultTokenizer: Tokenizer = (doc: string): string[] =>
   doc.match(/\w+/g) || [];
 
+/**
+ * The default analyzer, which only lowercases the token.
+ */
 export const defaultAnalyzer: Analyzer = (token: string): string =>
   token.toLowerCase();
 
@@ -41,34 +50,41 @@ export class Picosearch<T extends PicosearchDocument>
   private tokenizer: Tokenizer = defaultTokenizer;
   private analyzer: Analyzer = defaultAnalyzer;
   private keepDocuments = true;
+  private enableAutocomplete = false;
 
   private searchIndex: SearchIndex<T>;
 
+  /**
+   * Creates a new Picosearch instance.
+   * @param options The options to use for the Picosearch instance.
+   */
   constructor(
-    { tokenizer, analyzer, keepDocuments, jsonIndex }: PicosearchOptions = {
+    {
+      tokenizer,
+      analyzer,
+      keepDocuments,
+      searchIndex,
+      enableAutocomplete,
+    }: PicosearchOptions<T> = {
       tokenizer: defaultTokenizer,
       analyzer: defaultAnalyzer,
       keepDocuments: true,
+      enableAutocomplete: false,
     },
   ) {
     if (tokenizer) this.tokenizer = tokenizer;
     if (analyzer) this.analyzer = analyzer;
-    if (jsonIndex) {
-      const { opts, index } = JSON.parse(jsonIndex) as SerializedInstance<T>;
-      this.keepDocuments = opts.keepDocuments ?? true;
-      this.searchIndex = {
-        ...index,
-        docFreqsByToken: new Trie(
-          expandTrieNode<[number, number, number]>(index.docFreqsByToken),
-        ),
-      };
+    if (typeof keepDocuments === 'boolean') this.keepDocuments = keepDocuments;
+    if (typeof enableAutocomplete === 'boolean')
+      this.enableAutocomplete = enableAutocomplete;
+    if (searchIndex) {
+      this.searchIndex = searchIndex;
       return;
     }
-    if (typeof keepDocuments === 'boolean') this.keepDocuments = keepDocuments;
     this.searchIndex = {
       originalDocumentIds: [],
       fields: [],
-      docFreqsByToken: new Trie<[number, number, number]>(),
+      termTree: new RadixBKTreeMap<TokenInfo | RawTokenMarker>(),
       docLengths: {},
       totalDocLengthsByFieldId: {},
       docCountsByFieldId: {},
@@ -77,12 +93,10 @@ export class Picosearch<T extends PicosearchDocument>
     };
   }
 
-  private preprocess(doc: string): string[] {
-    return this.tokenizer(doc)
-      .map(this.analyzer)
-      .filter((t) => t);
-  }
-
+  /**
+   * Inserts a document into the index.
+   * @param document The document to insert.
+   */
   insertDocument(document: T) {
     if (typeof document.id !== 'string' || document.id === '') {
       throw new Error(
@@ -105,7 +119,18 @@ export class Picosearch<T extends PicosearchDocument>
         this.searchIndex.fields.push(field);
       }
 
-      const fieldTokens = this.preprocess(document[field]);
+      const fieldTokens: string[] = [];
+
+      // the unprocessed tokens are only for fuzyy search / autocomplete,
+      // so their frequency doesn't matter and we use a set
+      const fieldTokensRaw: Set<string> = new Set<string>();
+
+      this.tokenizer(document[field]).forEach((rawToken) => {
+        const token = this.analyzer(rawToken);
+        if (!token) return;
+        fieldTokens.push(token);
+        fieldTokensRaw.add(rawToken);
+      });
 
       this.searchIndex.docLengths[internalDocId] ??= {};
       this.searchIndex.totalDocLengthsByFieldId[fieldId] ??= 0;
@@ -124,12 +149,19 @@ export class Picosearch<T extends PicosearchDocument>
       );
 
       for (const [token, frequency] of Object.entries(fieldTokenFreqs)) {
-        // TODO: there might be better strategies to create a sequence for the trie insert than just
-        //       splitting the token into single characters.
-        const sequence = token.split('');
-        this.searchIndex.docFreqsByToken.insert(sequence, [
-          [internalDocId, fieldId, frequency],
-        ]);
+        const tokenInfo: TokenInfo = [internalDocId, fieldId, frequency];
+        this.searchIndex.termTree.insertNoFuzzy(token, tokenInfo);
+      }
+
+      for (const rawToken of fieldTokensRaw) {
+        // raw tokens are indexed only for fuzzy search / autocomplete
+        // make sure they are marked with 1
+        const rawTokenLower = rawToken.toLowerCase();
+        this.searchIndex.termTree.insert(rawTokenLower);
+        const node = this.searchIndex.termTree.lookup(rawTokenLower, true);
+        assert(!!node, 'node is undefined');
+        node.v ??= [];
+        if (node.v[0] !== 1) node.v.unshift(1);
       }
     }
 
@@ -140,17 +172,69 @@ export class Picosearch<T extends PicosearchDocument>
     this.searchIndex.docCount++;
   }
 
+  /**
+   * Inserts multiple documents into the index.
+   * @param documents The documents to insert.
+   */
   insertMultipleDocuments(documents: T[]) {
     for (const document of documents) {
       this.insertDocument(document);
     }
   }
 
+  /**
+   * Searches for documents matching the query string.
+   *
+   * @param query The query string to search for.
+   * @param options The options to use for the search.
+   *
+   * @returns An array of search results together with the documents.
+   */
+  searchDocuments(
+    query: string,
+    options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs: true },
+  ): SearchResultWithDoc<T>[];
+
+  /**
+   * Searches for documents matching the query string.
+   *
+   * @param query The query string to search for.
+   * @param options The options to use for the search.
+   *
+   * @returns An array of search results.
+   */
+  searchDocuments(
+    query: string,
+    options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs?: false },
+  ): SearchResult[];
+
   searchDocuments(
     query: string,
     options: QueryOptions = DEFAULT_QUERY_OPTIONS,
-  ): SearchResult<T>[] {
-    const tokens = [...new Set(this.preprocess(query))];
+  ): SearchResult[] | SearchResultWithDoc<T>[] {
+    const tokens: Set<string> = new Set<string>();
+
+    this.tokenizer(query).forEach((rawToken) => {
+      const token = this.analyzer(rawToken);
+      if (!token) return;
+      tokens.add(token);
+      const maxErrors =
+        options.fuzziness === 'AUTO'
+          ? getAutoFuzziness(rawToken)
+          : (options?.fuzziness ?? 0);
+      if (maxErrors > 0) {
+        const limit =
+          options?.maxExpansions ?? DEFAULT_QUERY_OPTIONS.maxExpansions;
+        const similarWords = this.searchIndex.termTree.getFuzzyMatches(
+          rawToken.toLowerCase(),
+          {
+            maxErrors,
+            limit,
+          },
+        );
+        similarWords.forEach((word) => tokens.add(word));
+      }
+    });
 
     const defaultWeight = options.fields?.length ? 0 : 1;
     const fieldWeights = Object.fromEntries(
@@ -176,19 +260,87 @@ export class Picosearch<T extends PicosearchDocument>
     );
   }
 
+  /**
+   * Autocomplete a word with fuzzy matching. Autocompletion is always case-insensitive.
+   *
+   * @param word The word to autocomplete.
+   * @param options The options to use for the autocomplete.
+   * @returns An array of autocomplete results.
+   */
+  autocomplete(
+    word: string,
+    options: AutocompleteOptions = DEFAULT_AUTOCOMPLETE_OPTIONS,
+  ): string[] {
+    assert(this.enableAutocomplete, 'Autocomplete is not enabled!');
+
+    const limit = options?.limit ?? DEFAULT_AUTOCOMPLETE_OPTIONS.limit;
+    const wordLower = word.toLowerCase();
+
+    if (
+      options.method === 'prefix' ||
+      (!options.method &&
+        options.method === DEFAULT_AUTOCOMPLETE_OPTIONS.method)
+    ) {
+      return this.searchIndex.termTree.getPrefixMatches(wordLower, {
+        limit,
+        includeValues: false,
+        // we need a filter to exclude tokens that were only indexed as analyzed tokens
+        filter: (values: (TokenInfo | RawTokenMarker)[]) => values[0] === 1,
+      });
+    }
+
+    const maxErrors =
+      !options?.fuzziness || options?.fuzziness === 'AUTO'
+        ? getAutoFuzziness(wordLower)
+        : options?.fuzziness;
+
+    // no filter needed here because all analyzed tokens were earlier indexed using insertNoFuzzy
+    return this.searchIndex.termTree.getFuzzyMatches(wordLower, {
+      maxErrors,
+      limit,
+      includeValues: false,
+    });
+  }
+
+  /**
+   * Serializes the index to a JSON string.
+   * @returns A JSON string representing the index.
+   */
   toJSON(): string {
     const jsonObj: SerializedInstance<T> = {
       index: {
         ...this.searchIndex,
-        docFreqsByToken: minifyTrieNode<[number, number, number]>(
-          this.searchIndex.docFreqsByToken.getRoot(),
-        ),
+        termTree: this.searchIndex.termTree.toMinified(),
       },
       opts: {
         keepDocuments: this.keepDocuments,
+        enableAutocomplete: this.enableAutocomplete,
       },
     };
 
     return JSON.stringify(jsonObj);
+  }
+
+  /**
+   * Deserializes a JSON string into a Picosearch instance.
+   * @param json The JSON string to deserialize.
+   * @param languageOpts Optional language-specific options for the tokenizer and analyzer.
+   * @returns A Picosearch instance.
+   */
+  static fromJSON<T extends PicosearchDocument>(
+    json: string,
+    languageOpts?: Pick<PicosearchOptions<T>, 'tokenizer' | 'analyzer'>,
+  ): Picosearch<T> {
+    const { opts, index } = JSON.parse(json) as SerializedInstance<T>;
+    const picosearch = new Picosearch<T>({
+      ...opts,
+      tokenizer: languageOpts?.tokenizer,
+      analyzer: languageOpts?.analyzer,
+      searchIndex: {
+        ...index,
+        termTree: RadixBKTreeMap.fromMinified(index.termTree),
+      },
+    });
+    return picosearch;
   }
 }

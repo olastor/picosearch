@@ -4,10 +4,10 @@
     "@biomejs/biome": "^1.9.4",
     "@fast-check/vitest": "^0.2.1",
     "@picosearch/picosearch": "workspace: *",
-    "@tsconfig/node22": "^22.0.1",
-    "@types/node": "^22.14.0",
-    "fast-check": "^4.0.1",
+    "@tsconfig/node22": "^22.0.2",
+    "@types/node": "^22.15.30",
+    "fast-check": "^4.1.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.1"
+    "vitest": "^3.2.2"
   }
 }

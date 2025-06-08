@@ -1,27 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getJsonKeyReplacer, parseFieldNameAndWeight } from './util';
-
-describe('getJsonKeyReplacer', () => {
-  it('should replace keys based on the mapping provided', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const replacer = getJsonKeyReplacer(keyMapping);
-    const result = replacer('key', { oldKey: 'value' });
-    expect(result).toEqual({ newKey: 'value' });
-  });
-
-  it('should not replace keys with no mapping', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const replacer = getJsonKeyReplacer(keyMapping);
-    const result = replacer('key', { anotherKey: 'value' });
-    expect(result).toEqual({ anotherKey: 'value' });
-  });
-
-  it('should return value if it is not an object', () => {
-    const keyMapping = { oldKey: 'newKey' };
-    const replacer = getJsonKeyReplacer(keyMapping);
-    expect(replacer('key', 'value')).toBe('value');
-  });
-});
+import { parseFieldNameAndWeight } from './util';
 
 describe('parseFieldNameAndWeight', () => {
   it('should parse field name and weight correctly', () => {

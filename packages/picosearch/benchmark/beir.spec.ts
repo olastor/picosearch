@@ -9,7 +9,7 @@ import { Picosearch } from '../src/';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as englishOptions from '@picosearch/language-english';
-import type { SearchResult } from '../src/interfaces.ts';
+import type { SearchResultWithDoc } from '../src/types';
 
 const downloadAndExtractCorpus = async (corpusName: string): Promise<void> => {
   const pipelineAsync = promisify(pipeline);
@@ -36,7 +36,7 @@ const downloadAndExtractCorpus = async (corpusName: string): Promise<void> => {
 const calculateNdcg10 = (
   queryId: string,
   qrels: Qrels,
-  hits: SearchResult<any>[],
+  hits: SearchResultWithDoc<any>[],
 ) => {
   const scores = hits.slice(0, 10).map((h) => qrels[queryId][h.id] ?? 0);
   const dcg10 = scores.reduce(
@@ -105,7 +105,7 @@ const evaluateDataset = (corpusName: string): number => {
 
   const indexTag = `Indexing Time (${corpusName})`;
   console.time(indexTag);
-  const index = new Picosearch({ ...englishOptions, keepDocuments: true });
+  const index = new Picosearch({ ...englishOptions, keepDocuments: false });
   index.insertMultipleDocuments(docs);
   console.timeEnd(indexTag);
 
@@ -119,6 +119,7 @@ const evaluateDataset = (corpusName: string): number => {
     count++;
     const hits = index.searchDocuments(query.text, {
       bm25: { b: 0.75, k1: 1.2 },
+      includeDocs: true,
     });
     ndcgSum += calculateNdcg10(query._id, qrels, hits);
   }
