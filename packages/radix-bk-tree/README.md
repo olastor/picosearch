@@ -4,6 +4,8 @@ This package implements a merge of a RadixTree and a BK-Tree with the goal of ha
 
 The RadixTree is extended by adding edges on leaf nodes that create a BK-Tree. The root of the BK-Tree is the first inserted value.
 
+![Example Tree](sample-tree.png)
+
 **Advantages**
 
 - space efficiency
