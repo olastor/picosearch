@@ -1,7 +1,7 @@
 import type { MinifiedNode, RadixBKTreeMap } from '@picosearch/radix-bk-tree';
 
 export type TokenInfo = [
-  documentId: number,
+  internalDocumentId: number,
   fieldId: number,
   frequency: number,
 ];
@@ -13,7 +13,7 @@ export interface SearchIndex<T extends PicosearchDocument> {
   fields: string[];
 
   // list of document IDs as passed by the user, the index will be used as document reference ID for all internal operations to be space efficient
-  originalDocumentIds: (string | number)[];
+  originalDocumentIds: string[];
 
   // tree to lookup both token info for BM25 and raw words for fuzzy/prefix matches;
   // if a leaf is a raw token, it is marked by 1 in the first element of the node values
@@ -35,6 +35,10 @@ export interface SearchIndex<T extends PicosearchDocument> {
   docsById: { [documentId: number]: T };
 }
 
+export type GetDocumentById<T extends PicosearchDocument> = (
+  documentId: string,
+) => Promise<T | null>;
+
 export type PicosearchOptions<T extends PicosearchDocument> = {
   /**
    * The tokenizer to use for tokenizing documents.
@@ -51,11 +55,19 @@ export type PicosearchOptions<T extends PicosearchDocument> = {
   analyzer?: Analyzer;
 
   /**
-   * Whether to keep the documents in the index.
+   * Whether to keep the documents in the index. Not keeping documents in the index will save much space.
    *
    * @default false
    */
   keepDocuments?: boolean;
+
+  /**
+   * A function to get a document by its ID.
+   * This can be used when `keepDocuments` is false to load documents at query time dynamically.
+   *
+   * @default undefined
+   */
+  getDocumentById?: GetDocumentById<T>;
 
   /**
    * The search index to use.
@@ -86,7 +98,7 @@ export type PicosearchDocument = Record<string, string>;
 export type Preprocessor = (doc: string) => string[];
 
 export type SearchResult = {
-  id: string | number;
+  id: string;
   score: number;
 };
 
@@ -94,7 +106,7 @@ export type SearchResultWithDoc<T extends PicosearchDocument> = SearchResult & {
   doc: T;
 };
 
-export type QueryOptions = {
+export type QueryOptions<T extends PicosearchDocument> = {
   /**
    * Whether to include the documents in the search results.
    */
@@ -140,6 +152,12 @@ export type QueryOptions = {
    * thus a higher number will yield more results but also take longer.
    */
   maxExpansions?: number;
+
+  /**
+   * A function to get a document by its ID. This can be used when `keepDocuments` is false to load documents at dynamically.
+   * This overrides any `getDocumentById` passed to the constructor only for this query.
+   */
+  getDocumentById?: GetDocumentById<T>;
 };
 
 export type AutocompleteOptions = {
@@ -170,12 +188,12 @@ export interface IPicosearch<T extends PicosearchDocument> {
   searchDocuments: {
     (
       query: string,
-      options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs?: false },
-    ): SearchResult[];
+      options?: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs?: false },
+    ): Promise<SearchResult[]>;
     (
       query: string,
-      options: Omit<QueryOptions, 'includeDocs'> & { includeDocs: true },
-    ): SearchResultWithDoc<T>[];
+      options: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs: true },
+    ): Promise<SearchResultWithDoc<T>[]>;
   };
   autocomplete: (prefix: string, options?: AutocompleteOptions) => string[];
   toJSON: () => string;

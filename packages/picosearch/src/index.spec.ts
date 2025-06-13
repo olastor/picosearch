@@ -2,6 +2,7 @@ import { fc, test } from '@fast-check/vitest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Picosearch } from './index';
 import type {
+  Analyzer,
   IPicosearch,
   PicosearchDocument,
   QueryOptions,
@@ -10,7 +11,7 @@ import type {
 } from './types';
 
 describe('Picosearch', () => {
-  let searchIndex: IPicosearch<PicosearchDocument>;
+  let searchIndex: IPicosearch<{ id: string; title: string; content: string }>;
 
   beforeEach(() => {
     searchIndex = new Picosearch({ enableAutocomplete: true });
@@ -19,31 +20,39 @@ describe('Picosearch', () => {
   describe('insertDocument', () => {
     it('throws error when id is missing', () => {
       expect(() =>
-        searchIndex.insertDocument({} as PicosearchDocument),
+        searchIndex.insertDocument(
+          {} as { id: string; title: string; content: string },
+        ),
       ).toThrow(
         "The document's required 'id' field is missing or not a string.",
       );
     });
 
-    it('insertDocument successfully adds a document', () => {
-      const document = { id: '1', content: 'hello world' };
+    it('insertDocument successfully adds a document', async () => {
+      const document = {
+        id: '1',
+        title: 'hello world',
+        content: 'hello world',
+      };
       searchIndex.insertDocument(document);
-      expect(searchIndex.searchDocuments('hello').length).toBe(1);
+      const results = await searchIndex.searchDocuments('hello');
+      expect(results.length).toBe(1);
     });
 
-    it('insertMultipleDocuments adds multiple documents', () => {
+    it('insertMultipleDocuments adds multiple documents', async () => {
       const documents = [
-        { id: '1', content: 'hello world' },
-        { id: '2', content: 'goodbye world' },
+        { id: '1', title: 'hello world', content: 'hello world' },
+        { id: '2', title: 'goodbye world', content: 'goodbye world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      expect(searchIndex.searchDocuments('world').length).toBe(2);
+      const results = await searchIndex.searchDocuments('world');
+      expect(results.length).toBe(2);
     });
 
     it('should insert raw token marker only once', () => {
       const documents = [
-        { id: '1', content: 'hello world' },
-        { id: '2', content: 'hello world' },
+        { id: '1', content: 'hello world', title: '' },
+        { id: '2', content: 'hello world', title: '' },
       ];
       searchIndex.insertMultipleDocuments(documents);
       // @ts-expect-error
@@ -53,32 +62,104 @@ describe('Picosearch', () => {
   });
 
   describe('searchDocuments', () => {
-    it('searchDocuments can find inserted documents', () => {
-      const document = { id: '1', content: 'hello world' };
+    it('searchDocuments can find inserted documents', async () => {
+      const document = {
+        id: '1',
+        title: 'hello world',
+        content: 'hello world',
+      };
       searchIndex.insertDocument(document);
-      const results: SearchResultWithDoc<PicosearchDocument>[] =
-        searchIndex.searchDocuments('hello', { includeDocs: true });
+      const results: SearchResultWithDoc<{
+        id: string;
+        title: string;
+        content: string;
+      }>[] = await searchIndex.searchDocuments('hello', { includeDocs: true });
       expect(results[0].doc.id).toBe(document.id);
     });
 
-    it('searchDocuments throws error on unknown field', () => {
-      const document = { id: '1', content: 'hello world' };
+    it('should not include document if includeDocs is false', async () => {
+      const document = {
+        id: '1',
+        title: 'hello world',
+        content: 'hello world',
+      };
       searchIndex.insertDocument(document);
-      expect(() =>
+      const results: SearchResult[] = await searchIndex.searchDocuments(
+        'hello',
+        { includeDocs: false },
+      );
+      expect(results[0]).not.toHaveProperty('doc');
+    });
+
+    it('should use getDocumentById from constructor if provided', async () => {
+      const document = {
+        id: '1',
+        title: 'hello world',
+        content: 'hello world',
+      };
+      const docFromFunction = {
+        id: '1',
+        title: 'hello world',
+        content: 'from function',
+      };
+      const searchIndex = new Picosearch({
+        getDocumentById: (id: string) => Promise.resolve(docFromFunction),
+      });
+      searchIndex.insertDocument(document);
+      const results: SearchResultWithDoc<{
+        id: string;
+        title: string;
+        content: string;
+      }>[] = await searchIndex.searchDocuments('hello', { includeDocs: true });
+      expect(results[0].doc).toEqual(docFromFunction);
+    });
+
+    it('should use getDocumentById from options if provided', async () => {
+      const document = {
+        id: '1',
+        title: 'hello world',
+        content: 'hello world',
+      };
+      const docFromFunction = {
+        id: '1',
+        title: 'hello world',
+        content: 'from function',
+      };
+      searchIndex.insertDocument(document);
+      const getDocumentById = (id: string) => Promise.resolve(docFromFunction);
+      const results: SearchResultWithDoc<{
+        id: string;
+        title: string;
+        content: string;
+      }>[] = await searchIndex.searchDocuments('hello', {
+        includeDocs: true,
+        getDocumentById,
+      });
+      expect(results[0].doc).toEqual(docFromFunction);
+    });
+
+    it('searchDocuments throws error on unknown field', async () => {
+      const document = {
+        id: '1',
+        content: 'hello world',
+        title: 'hello world',
+      };
+      searchIndex.insertDocument(document);
+      await expect(
         searchIndex.searchDocuments('hello', {
           fields: ['unknown'],
           includeDocs: true,
         }),
-      ).toThrow(`Unknown field 'unknown'!`);
+      ).rejects.toThrow(`Unknown field 'unknown'!`);
     });
 
-    it('searchDocuments with multiple fields', () => {
+    it('searchDocuments with multiple fields', async () => {
       const documents = [
         { id: '1', title: 'greetings world', content: 'hello world' },
         { id: '2', title: 'farewell', content: 'goodbye world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      const results = searchIndex.searchDocuments('world', {
+      const results = await searchIndex.searchDocuments('world', {
         fields: ['title', 'content'],
         includeDocs: true,
       });
@@ -88,13 +169,13 @@ describe('Picosearch', () => {
       expect(results[0].score).toBeGreaterThan(results[1].score);
     });
 
-    it('searchDocuments with weighted fields', () => {
+    it('searchDocuments with weighted fields', async () => {
       const documents = [
         { id: '1', title: 'greetings world', content: 'hello' },
         { id: '2', title: 'farewell', content: 'goodbye world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      const results = searchIndex.searchDocuments('world', {
+      const results = await searchIndex.searchDocuments('world', {
         fields: ['title', 'content^2'],
         includeDocs: true,
       });
@@ -103,25 +184,25 @@ describe('Picosearch', () => {
       expect(results[0].score).toBeGreaterThan(results[1].score);
     });
 
-    it('searchDocuments with limit', () => {
+    it('searchDocuments with limit', async () => {
       const documents = [
         { id: '1', title: 'greetings world', content: 'hello' },
         { id: '2', title: 'farewell', content: 'goodbye world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      const results = searchIndex.searchDocuments('world', {
+      const results = await searchIndex.searchDocuments('world', {
         limit: 1,
       });
       expect(results.length).toBe(1);
     });
 
-    it('searchDocuments with fuzzy search', () => {
+    it('searchDocuments with fuzzy search', async () => {
       const documents = [
         { id: '1', title: 'greetings world', content: 'hello' },
         { id: '2', title: 'farewell', content: 'goodbye world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      const results = searchIndex.searchDocuments('word', {
+      const results = await searchIndex.searchDocuments('word', {
         fuzziness: 'AUTO',
       });
       expect(results.length).toBe(2);
@@ -129,15 +210,16 @@ describe('Picosearch', () => {
 
     test.prop([fc.array(fc.stringMatching(/^[a-zA-Z0-9]+$/))])(
       '(prop) it should always find the document with the exact match',
-      (documents: string[]) => {
+      async (documents: string[]) => {
         const searchIndex = new Picosearch();
         documents.forEach((doc, i) =>
           searchIndex.insertDocument({ id: String(i), content: doc }),
         );
-        documents.forEach((doc, i) => {
-          const results = searchIndex.searchDocuments(doc);
+        for (let i = 0; i < documents.length; i++) {
+          const doc = documents[i];
+          const results = await searchIndex.searchDocuments(doc);
           expect(results.some((result) => result.id === String(i))).toBe(true);
-        });
+        }
       },
     );
   });
@@ -224,7 +306,7 @@ describe('Picosearch', () => {
   });
 
   describe('toJSON/fromJSON', () => {
-    it('export/import does not affect search', () => {
+    it('should support serialization and deserialization', async () => {
       const documents = [
         { id: '1', title: 'greetings world', content: 'hello' },
         { id: '2', title: 'farewell', content: 'goodbye world' },
@@ -232,7 +314,7 @@ describe('Picosearch', () => {
       searchIndex.insertMultipleDocuments(documents);
 
       const newSearchIndex = Picosearch.fromJSON(searchIndex.toJSON());
-      const results = newSearchIndex.searchDocuments('world', {
+      const results = await newSearchIndex.searchDocuments('world', {
         fields: ['title', 'content^2'],
         includeDocs: true,
       });

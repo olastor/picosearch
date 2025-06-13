@@ -96,7 +96,7 @@ const loadCorpusQrels = (
   return qrels;
 };
 
-const evaluateDataset = (corpusName: string): number => {
+const evaluateDataset = async (corpusName: string): Promise<number> => {
   const corpus = loadCorpusFile<CorpusItem>(corpusName, 'corpus');
   const queries = loadCorpusFile<QueryItem>(corpusName, 'queries');
   const qrels = loadCorpusQrels(corpusName, 'test');
@@ -121,7 +121,7 @@ const evaluateDataset = (corpusName: string): number => {
   for (const query of queries) {
     if (typeof qrels[query._id] === 'undefined') continue;
     count++;
-    const hits = index.searchDocuments(query.text, {
+    const hits = await index.searchDocuments(query.text, {
       bm25: { b: 0.75, k1: 1.2 },
       includeDocs: true,
     });
@@ -150,8 +150,8 @@ describe('Benchmark', () => {
   });
 
   for (const corpus of BENCHMARK_CORPORA) {
-    test(`should exceed minimum expected benchmark score for ${corpus}`, () => {
-      const avgNdcg10 = evaluateDataset(corpus);
+    test(`should exceed minimum expected benchmark score for ${corpus}`, async () => {
+      const avgNdcg10 = await evaluateDataset(corpus);
       expect(avgNdcg10).toBeGreaterThanOrEqual(
         MIN_EXPECTED_NGCD10_SCORES[corpus],
       );

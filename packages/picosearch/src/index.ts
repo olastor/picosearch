@@ -7,6 +7,7 @@ import {
 import type {
   Analyzer,
   AutocompleteOptions,
+  GetDocumentById,
   IPicosearch,
   PicosearchDocument,
   PicosearchOptions,
@@ -51,6 +52,7 @@ export class Picosearch<T extends PicosearchDocument>
   private analyzer: Analyzer = defaultAnalyzer;
   private keepDocuments = true;
   private enableAutocomplete = false;
+  private getDocumentById?: GetDocumentById<T>;
 
   private searchIndex: SearchIndex<T>;
 
@@ -65,11 +67,13 @@ export class Picosearch<T extends PicosearchDocument>
       keepDocuments,
       searchIndex,
       enableAutocomplete,
+      getDocumentById,
     }: PicosearchOptions<T> = {
       tokenizer: defaultTokenizer,
       analyzer: defaultAnalyzer,
       keepDocuments: true,
       enableAutocomplete: false,
+      getDocumentById: undefined,
     },
   ) {
     if (tokenizer) this.tokenizer = tokenizer;
@@ -77,6 +81,8 @@ export class Picosearch<T extends PicosearchDocument>
     if (typeof keepDocuments === 'boolean') this.keepDocuments = keepDocuments;
     if (typeof enableAutocomplete === 'boolean')
       this.enableAutocomplete = enableAutocomplete;
+    if (typeof getDocumentById === 'function')
+      this.getDocumentById = getDocumentById;
     if (searchIndex) {
       this.searchIndex = searchIndex;
       return;
@@ -192,10 +198,10 @@ export class Picosearch<T extends PicosearchDocument>
    *
    * @returns An array of search results together with the documents.
    */
-  searchDocuments(
+  async searchDocuments(
     query: string,
-    options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs: true },
-  ): SearchResultWithDoc<T>[];
+    options?: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs: true },
+  ): Promise<SearchResultWithDoc<T>[]>;
 
   /**
    * Searches for documents matching the query string.
@@ -205,16 +211,22 @@ export class Picosearch<T extends PicosearchDocument>
    *
    * @returns An array of search results.
    */
-  searchDocuments(
+  async searchDocuments(
     query: string,
-    options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs?: false },
-  ): SearchResult[];
+    options?: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs?: false },
+  ): Promise<SearchResult[]>;
 
-  searchDocuments(
+  async searchDocuments(
     query: string,
-    options: QueryOptions = DEFAULT_QUERY_OPTIONS,
-  ): SearchResult[] | SearchResultWithDoc<T>[] {
+    options: QueryOptions<T> = DEFAULT_QUERY_OPTIONS,
+  ): Promise<SearchResult[] | SearchResultWithDoc<T>[]> {
     const tokens: Set<string> = new Set<string>();
+    const getDocumentById = options.getDocumentById ?? this.getDocumentById;
+    if (options.includeDocs && !this.keepDocuments && !getDocumentById) {
+      throw new Error(
+        'getDocumentById is required because `keepDocuments` was false during indexing and the index does not contain the documents!',
+      );
+    }
 
     this.tokenizer(query).forEach((rawToken) => {
       const token = this.analyzer(rawToken);
@@ -265,16 +277,37 @@ export class Picosearch<T extends PicosearchDocument>
     ).slice(offset, options?.limit ? offset + options.limit : undefined);
 
     const { docsById, originalDocumentIds } = this.searchIndex;
-    return options?.includeDocs
-      ? results.map(([internalId, score]) => ({
-          id: originalDocumentIds[internalId],
-          score,
-          doc: docsById[internalId],
-        }))
-      : results.map(([internalId, score]) => ({
-          id: originalDocumentIds[internalId],
-          score,
-        }));
+
+    if (options?.includeDocs) {
+      if (this.keepDocuments && !getDocumentById) {
+        return results.map(([internalId, score]) => {
+          const doc = docsById[internalId];
+          return {
+            id: originalDocumentIds[internalId],
+            score,
+            doc,
+          };
+        });
+      }
+
+      // this assertion is just for the compiler
+      assert(!!getDocumentById, 'getDocumentById is undefined!');
+      return Promise.all(
+        results.map(async ([internalId, score]) => {
+          const doc = await getDocumentById(originalDocumentIds[internalId]);
+          return {
+            id: originalDocumentIds[internalId],
+            score,
+            doc,
+          };
+        }),
+      );
+    }
+
+    return results.map(([internalId, score]) => ({
+      id: originalDocumentIds[internalId],
+      score,
+    }));
   }
 
   /**
