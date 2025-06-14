@@ -2,6 +2,7 @@ import { RadixBKTreeMap } from '@picosearch/radix-bk-tree';
 import { scoreBM25F } from './bm25f';
 import {
   DEFAULT_AUTOCOMPLETE_OPTIONS,
+  DEFAULT_ID_FIELD,
   DEFAULT_QUERY_OPTIONS,
 } from './constants';
 import type {
@@ -53,7 +54,7 @@ export class Picosearch<T extends PicosearchDocument>
   private keepDocuments = true;
   private enableAutocomplete = false;
   private getDocumentById?: GetDocumentById<T>;
-
+  private idField = DEFAULT_ID_FIELD;
   private searchIndex: SearchIndex<T>;
 
   /**
@@ -68,12 +69,14 @@ export class Picosearch<T extends PicosearchDocument>
       searchIndex,
       enableAutocomplete,
       getDocumentById,
+      idField,
     }: PicosearchOptions<T> = {
       tokenizer: defaultTokenizer,
       analyzer: defaultAnalyzer,
       keepDocuments: true,
       enableAutocomplete: false,
       getDocumentById: undefined,
+      idField: DEFAULT_ID_FIELD,
     },
   ) {
     if (tokenizer) this.tokenizer = tokenizer;
@@ -83,6 +86,7 @@ export class Picosearch<T extends PicosearchDocument>
       this.enableAutocomplete = enableAutocomplete;
     if (typeof getDocumentById === 'function')
       this.getDocumentById = getDocumentById;
+    if (typeof idField === 'string') this.idField = idField;
     if (searchIndex) {
       this.searchIndex = searchIndex;
       return;
@@ -104,21 +108,24 @@ export class Picosearch<T extends PicosearchDocument>
    * @param document The document to insert.
    */
   insertDocument(document: T) {
-    if (typeof document.id !== 'string' || document.id === '') {
+    if (
+      typeof document[this.idField] !== 'string' ||
+      document[this.idField] === ''
+    ) {
       throw new Error(
-        `The document's required 'id' field is missing or not a string. Got: ${document.id}`,
+        `The document's required '${this.idField}' field is missing or not a string. Got: ${document[this.idField]}`,
       );
     }
 
-    if (this.searchIndex.originalDocumentIds.includes(document.id)) {
-      throw new Error(`Duplicate document ID: ${document.id}`);
+    if (this.searchIndex.originalDocumentIds.includes(document[this.idField])) {
+      throw new Error(`Duplicate document ID: ${document[this.idField]}`);
     }
 
     const internalDocId = this.searchIndex.originalDocumentIds.length;
-    this.searchIndex.originalDocumentIds.push(document.id);
+    this.searchIndex.originalDocumentIds.push(document[this.idField]);
 
     for (const field of Object.keys(document)) {
-      if (field === 'id') continue;
+      if (field === this.idField) continue;
       let fieldId = this.searchIndex.fields.findIndex((f) => f === field);
       if (fieldId < 0) {
         fieldId = this.searchIndex.fields.length;

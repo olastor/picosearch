@@ -81,7 +81,7 @@ export type PicosearchOptions<T extends PicosearchDocument> = {
    *
    * @default 'id'
    */
-  idField?: string;
+  idField?: keyof T;
 
   /**
    * Whether to enable autocomplete feature. When turned on, the autocomplete() method

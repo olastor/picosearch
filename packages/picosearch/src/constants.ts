@@ -11,3 +11,5 @@ export const DEFAULT_AUTOCOMPLETE_OPTIONS = {
   fuzziness: 'AUTO',
   limit: 10,
 } as const;
+
+export const DEFAULT_ID_FIELD = 'id';
