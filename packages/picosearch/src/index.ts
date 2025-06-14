@@ -89,7 +89,15 @@ export class Picosearch<T extends PicosearchDocument>
     if (typeof getDocumentById === 'function')
       this.getDocumentById = getDocumentById;
     if (typeof idField === 'string') this.idField = idField;
-    if (Array.isArray(indexedFields)) this.indexedFields = indexedFields;
+    if (Array.isArray(indexedFields)) {
+      indexedFields.forEach((field) =>
+        assert(
+          typeof field === 'string',
+          'All fields in `indexedFields` must be strings',
+        ),
+      );
+      this.indexedFields = indexedFields;
+    }
     if (searchIndex) {
       this.searchIndex = searchIndex;
       return;
