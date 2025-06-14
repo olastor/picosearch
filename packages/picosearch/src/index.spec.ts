@@ -90,7 +90,7 @@ describe('Picosearch', () => {
         title: string;
         content: string;
       }>[] = await searchIndex.searchDocuments('hello', { includeDocs: true });
-      expect(results[0].doc.id).toBe(document.id);
+      expect(results[0]?.doc?.id).toBe(document.id);
     });
 
     it('should not include document if includeDocs is false', async () => {
@@ -400,8 +400,8 @@ describe('Picosearch', () => {
         fields: ['title', 'content^2'],
         includeDocs: true,
       });
-      expect(results[0].doc.title).toBe('farewell');
-      expect(results[1].doc.title).toBe('greetings world');
+      expect(results[0]?.doc?.title).toBe('farewell');
+      expect(results[1]?.doc?.title).toBe('greetings world');
       expect(results[0].score).toBeGreaterThan(results[1].score);
     });
 
