@@ -59,6 +59,21 @@ describe('Picosearch', () => {
       const node = searchIndex.searchIndex.termTree.lookup('hello', true);
       expect(node.v).toEqual([1, [0, 0, 1], [1, 0, 1]]);
     });
+
+    it('should insert only selected fields', async () => {
+      const searchIndex = new Picosearch({ indexedFields: ['content'] });
+      const documents = [
+        { id: '1', content: 'hello world', title: '' },
+        { id: '2', content: 'hello world', title: 'title' },
+      ];
+      searchIndex.insertMultipleDocuments(documents);
+      await expect(searchIndex.searchDocuments('hello')).resolves.toHaveLength(
+        2,
+      );
+      await expect(searchIndex.searchDocuments('title')).resolves.toHaveLength(
+        0,
+      );
+    });
   });
 
   describe('searchDocuments', () => {

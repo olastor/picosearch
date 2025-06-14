@@ -91,6 +91,13 @@ export type PicosearchOptions<T extends PicosearchDocument> = {
    * @default false
    */
   enableAutocomplete?: boolean;
+
+  /**
+   * The text fields to index. If specified, only these fields can be searched.
+   *
+   * @default All fields except the ID.
+   */
+  indexedFields?: (keyof T)[];
 };
 
 export type PicosearchDocument = Record<string, string>;

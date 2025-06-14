@@ -56,6 +56,7 @@ export class Picosearch<T extends PicosearchDocument>
   private getDocumentById?: GetDocumentById<T>;
   private idField = DEFAULT_ID_FIELD;
   private searchIndex: SearchIndex<T>;
+  private indexedFields?: (keyof T)[];
 
   /**
    * Creates a new Picosearch instance.
@@ -70,6 +71,7 @@ export class Picosearch<T extends PicosearchDocument>
       enableAutocomplete,
       getDocumentById,
       idField,
+      indexedFields,
     }: PicosearchOptions<T> = {
       tokenizer: defaultTokenizer,
       analyzer: defaultAnalyzer,
@@ -87,6 +89,7 @@ export class Picosearch<T extends PicosearchDocument>
     if (typeof getDocumentById === 'function')
       this.getDocumentById = getDocumentById;
     if (typeof idField === 'string') this.idField = idField;
+    if (Array.isArray(indexedFields)) this.indexedFields = indexedFields;
     if (searchIndex) {
       this.searchIndex = searchIndex;
       return;
@@ -125,7 +128,12 @@ export class Picosearch<T extends PicosearchDocument>
     this.searchIndex.originalDocumentIds.push(document[this.idField]);
 
     for (const field of Object.keys(document)) {
-      if (field === this.idField) continue;
+      if (
+        field === this.idField ||
+        (this.indexedFields && !this.indexedFields.includes(field))
+      )
+        continue;
+
       let fieldId = this.searchIndex.fields.findIndex((f) => f === field);
       if (fieldId < 0) {
         fieldId = this.searchIndex.fields.length;
@@ -372,6 +380,8 @@ export class Picosearch<T extends PicosearchDocument>
       opts: {
         keepDocuments: this.keepDocuments,
         enableAutocomplete: this.enableAutocomplete,
+        idField: this.idField,
+        indexedFields: this.indexedFields,
       },
     };
 
