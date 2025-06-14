@@ -110,7 +110,7 @@ export type SearchResult = {
 };
 
 export type SearchResultWithDoc<T extends PicosearchDocument> = SearchResult & {
-  doc: T;
+  doc: T | null;
 };
 
 export type QueryOptions<T extends PicosearchDocument> = {
@@ -165,6 +165,29 @@ export type QueryOptions<T extends PicosearchDocument> = {
    * This overrides any `getDocumentById` passed to the constructor only for this query.
    */
   getDocumentById?: GetDocumentById<T>;
+
+  /**
+   * The fields to highlight in the documents.
+   */
+  highlightedFields?: (keyof T)[];
+
+  /**
+   * The tags to use for highlighting.
+   */
+  highlightTag?: {
+    /**
+     * The tag to use before the highlighted text.
+     *
+     * @default '<b>'
+     */
+    before: string;
+    /**
+     * The tag to use after the highlighted text.
+     *
+     * @default '</b>'
+     */
+    after: string;
+  };
 };
 
 export type AutocompleteOptions = {

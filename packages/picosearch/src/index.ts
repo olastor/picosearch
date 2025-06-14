@@ -5,6 +5,7 @@ import {
   DEFAULT_ID_FIELD,
   DEFAULT_QUERY_OPTIONS,
 } from './constants';
+import { highlightText } from './highlight';
 import type {
   Analyzer,
   AutocompleteOptions,
@@ -243,7 +244,7 @@ export class Picosearch<T extends PicosearchDocument>
     query: string,
     options: QueryOptions<T> = DEFAULT_QUERY_OPTIONS,
   ): Promise<SearchResult[] | SearchResultWithDoc<T>[]> {
-    const tokens: Set<string> = new Set<string>();
+    const queryTokens: Set<string> = new Set<string>();
     const getDocumentById = options.getDocumentById ?? this.getDocumentById;
     if (options.includeDocs && !this.keepDocuments && !getDocumentById) {
       throw new Error(
@@ -254,7 +255,7 @@ export class Picosearch<T extends PicosearchDocument>
     this.tokenizer(query).forEach((rawToken) => {
       const token = this.analyzer(rawToken);
       if (!token) return;
-      tokens.add(token);
+      queryTokens.add(token);
       const maxErrors =
         options.fuzziness === 'AUTO'
           ? getAutoFuzziness(rawToken)
@@ -269,7 +270,7 @@ export class Picosearch<T extends PicosearchDocument>
             limit,
           },
         );
-        similarWords.forEach((word) => tokens.add(word));
+        similarWords.forEach((word) => queryTokens.add(word));
       }
     });
 
@@ -292,7 +293,7 @@ export class Picosearch<T extends PicosearchDocument>
 
     const offset = options.offset ?? 0;
     const results = scoreBM25F<T>(
-      tokens,
+      queryTokens,
       this.searchIndex,
       fieldWeights,
       k1,
@@ -302,8 +303,9 @@ export class Picosearch<T extends PicosearchDocument>
     const { docsById, originalDocumentIds } = this.searchIndex;
 
     if (options?.includeDocs) {
+      let resultWithDocs: SearchResultWithDoc<T>[];
       if (this.keepDocuments && !getDocumentById) {
-        return results.map(([internalId, score]) => {
+        resultWithDocs = results.map(([internalId, score]) => {
           const doc = docsById[internalId];
           return {
             id: originalDocumentIds[internalId],
@@ -311,20 +313,44 @@ export class Picosearch<T extends PicosearchDocument>
             doc,
           };
         });
+      } else {
+        // this assertion is just for the compiler
+        assert(!!getDocumentById, 'getDocumentById is undefined!');
+        resultWithDocs = await Promise.all(
+          results.map(async ([internalId, score]) => {
+            const doc = await getDocumentById(originalDocumentIds[internalId]);
+            return {
+              id: originalDocumentIds[internalId],
+              score,
+              doc,
+            };
+          }),
+        );
       }
 
-      // this assertion is just for the compiler
-      assert(!!getDocumentById, 'getDocumentById is undefined!');
-      return Promise.all(
-        results.map(async ([internalId, score]) => {
-          const doc = await getDocumentById(originalDocumentIds[internalId]);
-          return {
-            id: originalDocumentIds[internalId],
-            score,
-            doc,
-          };
-        }),
-      );
+      if (options?.highlightedFields?.length) {
+        for (const result of resultWithDocs) {
+          for (const fieldName of options.highlightedFields) {
+            if (
+              !result.doc?.[fieldName] ||
+              typeof result.doc[fieldName] !== 'string'
+            )
+              continue;
+            result.doc[fieldName] = highlightText(
+              queryTokens,
+              result.doc[fieldName],
+              this.analyzer,
+              this.tokenizer,
+              options.highlightTag?.before ??
+                DEFAULT_QUERY_OPTIONS.highlightTag.before,
+              options.highlightTag?.after ??
+                DEFAULT_QUERY_OPTIONS.highlightTag.after,
+            ) as T[keyof T];
+          }
+        }
+      }
+
+      return resultWithDocs;
     }
 
     return results.map(([internalId, score]) => ({

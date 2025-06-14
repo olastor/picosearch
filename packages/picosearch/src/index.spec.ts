@@ -1,4 +1,5 @@
 import { fc, test } from '@fast-check/vitest';
+import * as englishAnalyzerOptions from '@picosearch/language-english';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Picosearch } from './index';
 import type {
@@ -179,8 +180,74 @@ describe('Picosearch', () => {
         includeDocs: true,
       });
       expect(results.length).toBe(2);
-      expect(results[0].doc.title).toBe('greetings world');
-      expect(results[1].doc.title).toBe('farewell');
+      expect(results[0].doc?.title).toBe('greetings world');
+      expect(results[1].doc?.title).toBe('farewell');
+      expect(results[0].score).toBeGreaterThan(results[1].score);
+    });
+
+    it('searchDocuments with highlighted fields', async () => {
+      const documents = [
+        { id: '1', title: 'greetings world', content: 'hello' },
+        { id: '2', title: 'farewell', content: 'goodbye world' },
+      ];
+      searchIndex.insertMultipleDocuments(documents);
+      const results = await searchIndex.searchDocuments('farewell world', {
+        fields: ['title', 'content^2'],
+        includeDocs: true,
+        highlightedFields: ['title', 'content'],
+      });
+      expect(results[0].doc?.title).toBe('<b>farewell</b>');
+      expect(results[0].doc?.content).toBe('goodbye <b>world</b>');
+      expect(results[1].doc?.title).toBe('greetings <b>world</b>');
+      expect(results[1].doc?.content).toBe('hello');
+      expect(results[0].score).toBeGreaterThan(results[1].score);
+    });
+
+    it('searchDocuments with english text', async () => {
+      const documents = [
+        {
+          id: '1',
+          title: 'greetings world',
+          content:
+            'Hello, how are you? I am fine, thank you. How is the weather in New York? It is sunny. How is the weather in London? It is rainy.',
+        },
+      ];
+      const searchIndex = new Picosearch({
+        ...englishAnalyzerOptions,
+      });
+      searchIndex.insertMultipleDocuments(documents);
+      const results = await searchIndex.searchDocuments(
+        'How is the weather in London? Is it sunny?',
+        {
+          includeDocs: true,
+          highlightedFields: ['title', 'content'],
+        },
+      );
+      expect(results[0].doc?.title).toBe('greetings world');
+      expect(results[0].doc?.content).toBe(
+        'Hello, how are you? I am fine, thank you. How is the <b>weather</b> in New York? It is <b>sunny</b>. How is the <b>weather</b> in <b>London</b>? It is rainy.',
+      );
+    });
+
+    it('searchDocuments with highlighted fields and custom tags', async () => {
+      const documents = [
+        { id: '1', title: 'greetings world', content: 'hello' },
+        { id: '2', title: 'farewell', content: 'goodbye world' },
+      ];
+      searchIndex.insertMultipleDocuments(documents);
+      const results = await searchIndex.searchDocuments('farewell world', {
+        fields: ['title', 'content^2'],
+        includeDocs: true,
+        highlightedFields: ['title', 'content'],
+        highlightTag: {
+          before: '<em>',
+          after: '</em>',
+        },
+      });
+      expect(results[0].doc?.title).toBe('<em>farewell</em>');
+      expect(results[0].doc?.content).toBe('goodbye <em>world</em>');
+      expect(results[1].doc?.title).toBe('greetings <em>world</em>');
+      expect(results[1].doc?.content).toBe('hello');
       expect(results[0].score).toBeGreaterThan(results[1].score);
     });
 
@@ -194,8 +261,8 @@ describe('Picosearch', () => {
         fields: ['title', 'content^2'],
         includeDocs: true,
       });
-      expect(results[0].doc.title).toBe('farewell');
-      expect(results[1].doc.title).toBe('greetings world');
+      expect(results[0].doc?.title).toBe('farewell');
+      expect(results[1].doc?.title).toBe('greetings world');
       expect(results[0].score).toBeGreaterThan(results[1].score);
     });
 

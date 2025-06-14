@@ -4,6 +4,10 @@ export const DEFAULT_QUERY_OPTIONS = {
     b: 0.75,
   },
   maxExpansions: 5,
+  highlightTag: {
+    before: '<b>',
+    after: '</b>',
+  },
 } as const;
 
 export const DEFAULT_AUTOCOMPLETE_OPTIONS = {
