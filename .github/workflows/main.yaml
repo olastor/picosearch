@@ -35,6 +35,12 @@ jobs:
         node-version: ["22"]
     steps:
       - uses: actions/checkout@v4
+      - name: Cache benchmark data
+        id: cache-benchmark-data
+        uses: actions/cache@v4
+        with:
+          path: packages/picosearch/benchmark/data
+          key: benchmark-data
       - uses: pnpm/action-setup@v4
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -46,14 +52,6 @@ jobs:
       - run: pnpm -r build
       - run: pnpm run benchmark
         working-directory: packages/picosearch
-      - name: Cache benchmark data
-        uses: actions/cache@v3
-        with:
-          path: packages/picosearch/benchmark/data
-          key: ${{ runner.os }}-benchmark-${{ matrix.node-version }}-${{ hashFiles('packages/picosearch/benchmark/data/**') }}
-          restore-keys: |
-            ${{ runner.os }}-benchmark-${{ matrix.node-version }}-
-            ${{ runner.os }}-benchmark-
 
   deploy-npm-registry:
     if: startsWith(github.ref, 'refs/tags/v')
