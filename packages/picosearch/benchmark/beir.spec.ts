@@ -9,7 +9,7 @@ import { Picosearch } from '../src/';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as englishOptions from '@picosearch/language-english';
-import type { SearchResultWithDoc } from '../src/types';
+import type { SearchResult } from '../src/types';
 
 const downloadAndExtractCorpus = async (corpusName: string): Promise<void> => {
   const pipelineAsync = promisify(pipeline);
@@ -36,7 +36,7 @@ const downloadAndExtractCorpus = async (corpusName: string): Promise<void> => {
 const calculateNdcg10 = (
   queryId: string,
   qrels: Qrels,
-  hits: SearchResultWithDoc<any>[],
+  hits: SearchResult[],
 ) => {
   const scores = hits.slice(0, 10).map((h) => qrels[queryId][h.id] ?? 0);
   const dcg10 = scores.reduce(
@@ -123,7 +123,6 @@ const evaluateDataset = async (corpusName: string): Promise<number> => {
     count++;
     const hits = await index.searchDocuments(query.text, {
       bm25: { b: 0.75, k1: 1.2 },
-      includeDocs: true,
     });
     ndcgSum += calculateNdcg10(query._id, qrels, hits);
   }
