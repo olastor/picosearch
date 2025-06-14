@@ -37,6 +37,7 @@ export const highlightText = (
   let result = '';
   let k = 0;
   for (let i = 0; i < doc.length; i++) {
+    // TODO: double check if any edge cases are missed
     const word = rawDocTokens[k];
     if (isMatch(word, i)) {
       result += rawTokensToHighlight.has(word)
