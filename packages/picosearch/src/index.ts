@@ -351,8 +351,7 @@ export class Picosearch<T extends PicosearchDocument>
 
     if (
       options.method === 'prefix' ||
-      (!options.method &&
-        options.method === DEFAULT_AUTOCOMPLETE_OPTIONS.method)
+      (!options.method && DEFAULT_AUTOCOMPLETE_OPTIONS.method === 'prefix')
     ) {
       return this.searchIndex.termTree.getPrefixMatches(wordLower, {
         limit,
