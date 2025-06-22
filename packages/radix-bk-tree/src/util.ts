@@ -20,6 +20,12 @@ export const getBKChild = <T>(
   return node[NODE_KEYS.BK_CHILDREN]?.[key];
 };
 
+export const compareFirstChar = (a: string, b: string) =>
+  a[0].localeCompare(b[0]);
+
+export const compareFirstCharOfEdge = <T>(a: RadixEdge<T>, b: RadixEdge<T>) =>
+  a[1][0].localeCompare(b[1][0]);
+
 /**
  * Add a radix child reference to a node.
  *
@@ -34,7 +40,7 @@ export const addRadixChild = <T>(
 ) => {
   source.r ??= [] as RadixEdge<T>[];
   const edge = [source, label, target] as RadixEdge<T>;
-  sortedInsert(source.r, edge, (a, b) => a[1].localeCompare(b[1]));
+  sortedInsert(source.r, edge, compareFirstCharOfEdge);
   if (!target[NODE_KEYS.IS_ROOT]) {
     target[NODE_KEYS.PARENT] = edge;
   }
@@ -284,6 +290,33 @@ export const sortedInsert = <T>(
     else high = mid;
   }
   array.splice(low, 0, value);
+};
+
+/**
+ * Search for a value in a sorted array efficiently using binary search and return its index.
+ *
+ * @param array - The array to search in. Must be sorted.
+ * @param value - The value to search for.
+ * @param compare - The comparison function.
+ *
+ * @returns The index of the value in the array, or -1 if not found.
+ */
+export const sortedFindIndex = <T>(
+  array: T[],
+  value: T,
+  compare: (a: T, b: T) => number,
+): number => {
+  let low = 0;
+  let high = array.length;
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    const compareResult = compare(array[mid], value);
+    if (compareResult === 0) return mid;
+    if (compareResult < 0) low = mid + 1;
+    else high = mid;
+  }
+
+  return -1;
 };
 
 /**

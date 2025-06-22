@@ -11,9 +11,12 @@ import {
   getBKChild,
   getCommonPrefix,
   getNodeWord,
+  sortedFindIndex,
   sortedInsert,
   toMinifiedNode,
 } from './util';
+
+fc.configureGlobal({ numRuns: 100 });
 
 describe('sortedInsert', () => {
   it('should insert a value into an empty array', () => {
@@ -101,6 +104,51 @@ describe('sortedInsert', () => {
       expect(resultElements).toEqual(expect.arrayContaining(expectedElements));
     },
   );
+});
+
+describe('sortedFindIndex', () => {
+  const sortAsc = (a: number, b: number) => a - b;
+  it('should find the index of the value', () => {
+    expect(sortedFindIndex([1, 2, 3, 4, 5], 3, sortAsc)).toBe(2);
+    expect(sortedFindIndex([1], 1, sortAsc)).toBe(0);
+    expect(sortedFindIndex([1, 2], 1, sortAsc)).toBe(0);
+    expect(sortedFindIndex([1, 2], 2, sortAsc)).toBe(1);
+  });
+
+  it('should return -1 if the value is not found', () => {
+    expect(sortedFindIndex([1, 2, 3, 4, 5], 6, sortAsc)).toBe(-1);
+    expect(sortedFindIndex([], 6, sortAsc)).toBe(-1);
+    expect(sortedFindIndex([1], 6, sortAsc)).toBe(-1);
+    expect(sortedFindIndex([4, 5], 6, sortAsc)).toBe(-1);
+  });
+
+  test.prop([
+    fc
+      .uniqueArray(fc.integer(), { minLength: 1, maxLength: 1000 })
+      .chain((array) =>
+        fc.integer({ min: 0, max: array.length - 1 }).chain((index) =>
+          fc.record({
+            array: fc.constant(array.sort(sortAsc)),
+            index: fc.constant(index),
+          }),
+        ),
+      ),
+  ])('should always find the correct index', ({ array, index }) => {
+    return index === sortedFindIndex(array, array[index], sortAsc);
+  });
+
+  test.prop([
+    fc
+      .uniqueArray(fc.integer(), { minLength: 1, maxLength: 1000 })
+      .chain((array) =>
+        fc.record({
+          array: fc.constant(array.sort(sortAsc)),
+          value: fc.integer().filter((t) => !array.includes(t)),
+        }),
+      ),
+  ])('should always return -1 for non-existent value', ({ array, value }) => {
+    return -1 === sortedFindIndex(array, value, sortAsc);
+  });
 });
 
 describe('getBKChild', () => {
