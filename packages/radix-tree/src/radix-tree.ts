@@ -93,7 +93,6 @@ export class RadixTreeMap<T> implements IRadixTreeMap<T> {
     while (currentNode) {
       const children: RadixTreeMapNode<T>[0] = currentNode[0];
       currentNode = null;
-      // TODO: add the same optimization as in radix-bk-tree using sortedFindIndex
       for (const [edgeLabel, childNode] of Object.entries(children)) {
         const commonPrefix = getCommonPrefix(edgeLabel, key.slice(keyOffset));
         if (!commonPrefix) continue;

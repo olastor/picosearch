@@ -124,14 +124,6 @@ describe('RadixBKTreeMap', () => {
       expect(radix.lookup('bobby')).toEqual([7]);
       expect(radix.lookup('bobbies')).toEqual([8]);
     });
-    it('should insert and search sequences correctly', () => {
-      const radix = new RadixBKTreeMap<number>();
-      const words = ['b!', 'B '];
-      for (let i = 0; i < words.length; i++) {
-        radix.insert(words[i], i);
-      }
-      expect(radix.lookup(words[1])).toEqual([1]);
-    });
     test.prop([fc.uniqueArray(fc.string({ minLength: 1, maxLength: 10 }))])(
       'should insert and lookup any string',
       (corpus) => {

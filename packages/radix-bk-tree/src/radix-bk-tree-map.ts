@@ -7,19 +7,16 @@ import type {
   IRadixBKTreeMap,
   MinifiedNode,
   RadixBKTreeMapNode,
-  RadixEdge,
 } from './types';
 import {
   assert,
   addBKChild,
   addRadixChild,
   addValues,
-  compareFirstCharOfEdge,
   fromMinifiedNode,
   getBKChild,
   getCommonPrefix,
   getNodeWord,
-  sortedFindIndex,
   sortedInsert,
   toMinifiedNode,
   traverseRadix,
@@ -75,34 +72,30 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
 
       currentNode = null;
 
-      const remainingKey = key.slice(keyOffset);
-      const matchingEdgeIndex = sortedFindIndex(
-        edges || [],
-        [null, remainingKey, null] as unknown as RadixEdge<T>,
-        compareFirstCharOfEdge,
-      );
-      if (edges && matchingEdgeIndex !== -1) {
-        const [, edgeLabel, childNode] = edges[matchingEdgeIndex];
-        const commonPrefix = getCommonPrefix(edgeLabel, remainingKey);
-        keyOffset += commonPrefix.length;
-        assert(keyOffset <= key.length, 'Unexpected key offset overflow');
-        assert(
-          commonPrefix.length <= edgeLabel.length,
-          'Unexpected prefix length overflow',
-        );
+      if (edges) {
+        for (let i = 0; i < edges.length; i++) {
+          const [, edgeLabel, childNode] = edges[i];
+          const commonPrefix = getCommonPrefix(edgeLabel, key.slice(keyOffset));
+          if (!commonPrefix) continue;
+          keyOffset += commonPrefix.length;
+          assert(keyOffset <= key.length, 'Unexpected key offset overflow');
+          assert(
+            commonPrefix.length <= edgeLabel.length,
+            'Unexpected prefix length overflow',
+          );
 
-        const isPartialMatch = commonPrefix.length < edgeLabel.length;
-        if (!isPartialMatch) {
-          const isFinalMatch = keyOffset === key.length;
-          if (isFinalMatch) {
-            // word is already in tree
-            addValues(childNode, values);
-            if (insertBK) this._insertBK(key, childNode);
-            return;
+          if (commonPrefix.length === edgeLabel.length) {
+            if (keyOffset === key.length) {
+              // word is already in tree
+              addValues(childNode, values);
+              if (insertBK) this._insertBK(key, childNode);
+              return;
+            }
+
+            currentNode = childNode as RadixBKTreeMapNode<T>;
+            break;
           }
 
-          currentNode = childNode as RadixBKTreeMapNode<T>;
-        } else {
           // partial match => split the edge
           const oldWordNode = childNode;
           const newIntermediateNode = Object.create(
@@ -111,7 +104,7 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
           const suffixOld = edgeLabel.slice(commonPrefix.length);
           const suffixNew = key.slice(keyOffset);
 
-          edges.splice(matchingEdgeIndex, 1);
+          edges.splice(i, 1);
           addRadixChild(currentNodeSaved, commonPrefix, newIntermediateNode);
           addRadixChild(newIntermediateNode, suffixOld, oldWordNode);
 
@@ -123,7 +116,9 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
 
           addValues(newWordNode, values);
 
-          if (insertBK) this._insertBK(key, newWordNode);
+          if (insertBK) {
+            this._insertBK(key, newWordNode);
+          }
 
           return;
         }
@@ -215,26 +210,27 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
       }
 
       currentNode = null;
-      const edgeIndex = sortedFindIndex(
-        edges,
-        [
-          null,
-          key.slice(keyOffset, keyOffset + 1),
-          null,
-        ] as unknown as RadixEdge<T>,
-        compareFirstCharOfEdge,
-      );
-      if (edgeIndex === -1) {
+      for (const [, edgeLabel, childNode] of edges) {
+        const commonPrefix = getCommonPrefix(edgeLabel, key.slice(keyOffset));
+        if (!commonPrefix) continue;
+        assert(
+          commonPrefix.length <= edgeLabel.length,
+          'Unexpected prefix length overflow',
+        );
+        if (commonPrefix.length === edgeLabel.length) {
+          keyOffset += commonPrefix.length;
+          assert(keyOffset <= key.length, 'Unexpected key offset overflow');
+          if (keyOffset === key.length)
+            return returnNode
+              ? childNode
+              : (childNode[NODE_KEYS.VALUES] ?? null);
+          currentNode = childNode as RadixBKTreeMapNode<T>;
+          break;
+        }
+
+        // the key matches only a part of the edge
         return null;
       }
-      const [, edgeLabel, childNode] = edges[edgeIndex];
-      const commonPrefix = getCommonPrefix(edgeLabel, key.slice(keyOffset));
-      if (commonPrefix.length !== edgeLabel.length) return null;
-      keyOffset += commonPrefix.length;
-      assert(keyOffset <= key.length, 'Unexpected key offset overflow');
-      if (keyOffset === key.length)
-        return returnNode ? childNode : (childNode[NODE_KEYS.VALUES] ?? null);
-      currentNode = childNode as RadixBKTreeMapNode<T>;
     }
 
     return null;
