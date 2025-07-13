@@ -1,14 +1,24 @@
 {
   "name": "@picosearch/picosearch",
-  "version": "3.0.0-rc.2",
+  "version": "3.0.0-rc.3",
   "description": "Minimalistic full-text search, zero dependencies, local-first, browser-compatible.",
   "main": "dist/index.js",
+  "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js",
+      "umd": "./dist/umd/picosearch-bundle.umd.js"
+    }
+  },
   "files": [
     "/dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build:cjs": "tsc -p tsconfig.build.json",
+    "build:esm": "tsc -p tsconfig.build.esm.json",
+    "build": "pnpm run build:cjs && pnpm run build:esm",
     "test": "vitest src/",
     "benchmark": "vitest --hookTimeout 300000 --testTimeout 300000 benchmark/",
     "lint": "biome check",
