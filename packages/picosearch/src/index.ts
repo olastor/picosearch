@@ -22,11 +22,7 @@ import type {
   TokenInfo,
   Tokenizer,
 } from './types';
-import {
-  assert,
-  getAutoFuzziness,
-  parseFieldNameAndWeight,
-} from './util';
+import { assert, getAutoFuzziness, parseFieldNameAndWeight } from './util';
 
 /**
  * The default tokenizer, which splits the document into words by matching \w+.
