@@ -383,6 +383,65 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
     query: string,
     options?: IFuzzySearchOptions<T>,
   ): string[] | [string, T[]][] {
+    if (!options) {
+      return this.getBatchFuzzyMatches([query]);
+    }
+
+    if (options?.includeValues) {
+      return this.getBatchFuzzyMatches(
+        [query],
+        options as IFuzzySearchOptions<T> & { includeValues: true },
+      );
+    }
+
+    return this.getBatchFuzzyMatches(
+      [query],
+      options as IFuzzySearchOptions<T> & { includeValues?: false },
+    );
+  }
+
+  /**
+   * Get all keys that are within the given distance of any of the queries.
+   *
+   * @example
+   * ```ts
+   * const tree = new RadixBKTreeMap<string>();
+   * tree.insert('hello', 'world');
+   * tree.getFuzzyMatches(['helo', 'hola']); // ['hello']
+   * ```
+   *
+   * @param queries - The queries to match.
+   * @param options - Optional options to control the behavior of the function.
+   * @returns An array of keys that are within the given edit distance of the query.
+   */
+  getBatchFuzzyMatches(
+    queries: string[],
+    options?: IFuzzySearchOptions<T> & { includeValues?: false },
+  ): string[];
+
+  /**
+   * Get all keys together with their values that are within the given distance of any of the queries.
+   *
+   * @example
+   * ```ts
+   * const tree = new RadixBKTreeMap<string>();
+   * tree.insert('hello', 'world');
+   * tree.getBatchFuzzyMatches(['helo', 'hola'], { includeValues: true }); // [['hello', ['world']]]
+   * ```
+   *
+   * @param queries - The queries to match.
+   * @param options - Optional options to control the behavior of the function.
+   * @returns An array of keys together with their values that are within the given edit distance of the query.
+   */
+  getBatchFuzzyMatches(
+    queries: string[],
+    options?: IFuzzySearchOptions<T> & { includeValues: true },
+  ): [string, T[]][];
+
+  getBatchFuzzyMatches(
+    queries: string[],
+    options?: IFuzzySearchOptions<T>,
+  ): string[] | [string, T[]][] {
     assert(
       !options?.limit || options.limit > 0,
       'Invalid parameter "limit" provided!',
@@ -407,7 +466,9 @@ export class RadixBKTreeMap<T> implements IRadixBKTreeMap<T> {
       const currentNode = stack.shift();
       if (!currentNode) break; // let the compiler now it exists...
       const currentNodeWord = getNodeWord(currentNode);
-      const dist = this.getDistance(currentNodeWord, query);
+      const dist = Math.min(
+        ...queries.map((query) => this.getDistance(currentNodeWord, query)),
+      );
       if (
         dist <= maxError &&
         (!options?.filter ||

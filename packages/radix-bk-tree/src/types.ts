@@ -85,6 +85,16 @@ export interface IRadixBKTreeMap<T> {
       options?: IFuzzySearchOptions<T> & { includeValues: true },
     ): [string, T[]][];
   };
+  getBatchFuzzyMatches: {
+    (
+      queries: string[],
+      options?: IFuzzySearchOptions<T> & { includeValues?: false },
+    ): string[];
+    (
+      queries: string[],
+      options?: IFuzzySearchOptions<T> & { includeValues: true },
+    ): [string, T[]][];
+  };
   getPrefixMatches: {
     (
       prefix: string,

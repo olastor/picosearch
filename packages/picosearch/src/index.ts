@@ -22,7 +22,11 @@ import type {
   TokenInfo,
   Tokenizer,
 } from './types';
-import { assert, getAutoFuzziness, parseFieldNameAndWeight } from './util';
+import {
+  assert,
+  getAutoFuzziness,
+  parseFieldNameAndWeight,
+} from './util';
 
 /**
  * The default tokenizer, which splits the document into words by matching \w+.
@@ -256,23 +260,37 @@ export class Picosearch<T extends PicosearchDocument>
       const token = this.analyzer(rawToken);
       if (!token) return;
       queryTokens.add(token);
-      const maxErrors =
-        options.fuzziness === 'AUTO'
-          ? getAutoFuzziness(rawToken)
-          : (options?.fuzziness ?? 0);
-      if (maxErrors > 0) {
-        const limit =
-          options?.maxExpansions ?? DEFAULT_QUERY_OPTIONS.maxExpansions;
-        const similarWords = this.searchIndex.termTree.getFuzzyMatches(
-          rawToken.toLowerCase(),
-          {
-            maxErrors,
-            limit,
-          },
-        );
-        similarWords.forEach((word) => queryTokens.add(word));
-      }
     });
+
+    const limit = options?.maxExpansions ?? DEFAULT_QUERY_OPTIONS.maxExpansions;
+    const { fuzziness } = options;
+    if (typeof fuzziness === 'number' && fuzziness > 0) {
+      this.searchIndex.termTree
+        .getBatchFuzzyMatches([...queryTokens], {
+          maxErrors: fuzziness,
+          limit,
+        })
+        .forEach((word) => queryTokens.add(word));
+    } else if (options?.fuzziness === 'AUTO') {
+      const queriesByMaxErrors = [...queryTokens].reduce(
+        (acc, token) => {
+          const maxErrors = getAutoFuzziness(token);
+          acc[maxErrors] ??= [];
+          acc[maxErrors].push(token);
+          return acc;
+        },
+        {} as Record<number, string[]>,
+      );
+
+      Object.entries(queriesByMaxErrors).forEach(([maxErrors, tokens]) => {
+        this.searchIndex.termTree
+          .getBatchFuzzyMatches(tokens, {
+            maxErrors: Number(maxErrors),
+            limit,
+          })
+          .forEach((word) => queryTokens.add(word));
+      });
+    }
 
     const defaultWeight = options.fields?.length ? 0 : 1;
     const fieldWeights = Object.fromEntries(
