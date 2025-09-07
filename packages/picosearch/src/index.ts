@@ -11,6 +11,8 @@ import type {
   AutocompleteOptions,
   GetDocumentById,
   IPicosearch,
+  Patch,
+  PatchChange,
   PicosearchDocument,
   PicosearchOptions,
   QueryOptions,
@@ -104,6 +106,8 @@ export class Picosearch<T extends PicosearchDocument>
       return;
     }
     this.searchIndex = {
+      specVersion: 1,
+      version: 0,
       originalDocumentIds: [],
       fields: [],
       termTree: new RadixBKTreeMap<TokenInfo | RawTokenMarker>(),
@@ -116,102 +120,199 @@ export class Picosearch<T extends PicosearchDocument>
   }
 
   /**
-   * Inserts a document into the index.
-   * @param document The document to insert.
+   * Creates a patch to add documents to the index. This leaves the search index unchanged
+   * and returns an object that can be passed to `applyPatch` to update the same index.
+   *
+   * This is useful for scenarios where you want to provide small incremental updates to an existing
+   * search index without having to replace the entire index.
+   *
+   * @param add The documents to add to the index.
+   * @returns A patch that can be passed to `applyPatch` to update the same index.
    */
-  insertDocument(document: T) {
-    if (
-      typeof document[this.idField] !== 'string' ||
-      document[this.idField] === ''
-    ) {
-      throw new Error(
-        `The document's required '${this.idField}' field is missing or not a string. Got: ${document[this.idField]}`,
-      );
-    }
+  createPatch({ add }: { add: T[] }): Patch<T> {
+    const change: PatchChange<T> = {
+      type: 'add',
+      addedFields: [],
+      addedOriginalDocumentIds: [],
+      addedTermTreeLeaves: Object.create(null),
+      addedDocLengths: Object.create(null),
+      addedTotalDocLengthsByFieldId: {},
+      addedDocCountsByFieldId: {},
+      addedDocCount: add.length,
+    };
 
-    if (this.searchIndex.originalDocumentIds.includes(document[this.idField])) {
-      throw new Error(`Duplicate document ID: ${document[this.idField]}`);
-    }
+    for (let i = 0; i < add.length; i++) {
+      const document = add[i];
 
-    const internalDocId = this.searchIndex.originalDocumentIds.length;
-    this.searchIndex.originalDocumentIds.push(document[this.idField]);
-
-    for (const field of Object.keys(document)) {
       if (
-        field === this.idField ||
-        (this.indexedFields && !this.indexedFields.includes(field))
-      )
-        continue;
-
-      let fieldId = this.searchIndex.fields.findIndex((f) => f === field);
-      if (fieldId < 0) {
-        fieldId = this.searchIndex.fields.length;
-        this.searchIndex.fields.push(field);
+        typeof document[this.idField] !== 'string' ||
+        document[this.idField] === ''
+      ) {
+        throw new Error(
+          `The document's required '${this.idField}' field is missing or not a string. Got: ${document[this.idField]}`,
+        );
       }
 
-      const fieldTokens: string[] = [];
-
-      // the unprocessed tokens are only for fuzyy search / autocomplete,
-      // so their frequency doesn't matter and we use a set
-      const fieldTokensRaw: Set<string> = new Set<string>();
-
-      this.tokenizer(document[field]).forEach((rawToken) => {
-        const token = this.analyzer(rawToken);
-        if (!token) return;
-        fieldTokens.push(token);
-        fieldTokensRaw.add(rawToken);
-      });
-
-      this.searchIndex.docLengths[internalDocId] ??= {};
-      this.searchIndex.totalDocLengthsByFieldId[fieldId] ??= 0;
-      this.searchIndex.docCountsByFieldId[fieldId] ??= 0;
-
-      this.searchIndex.docLengths[internalDocId][fieldId] = fieldTokens.length;
-      this.searchIndex.totalDocLengthsByFieldId[fieldId] += fieldTokens.length;
-      this.searchIndex.docCountsByFieldId[fieldId]++;
-
-      const fieldTokenFreqs = fieldTokens.reduce(
-        (acc: { [token: string]: number }, token: string) => {
-          acc[token] = (acc[token] || 0) + 1;
-          return acc;
-        },
-        {},
-      );
-
-      for (const [token, frequency] of Object.entries(fieldTokenFreqs)) {
-        const tokenInfo: TokenInfo = [internalDocId, fieldId, frequency];
-        this.searchIndex.termTree.insertNoFuzzy(token, tokenInfo);
+      if (
+        this.searchIndex.originalDocumentIds.includes(document[this.idField])
+      ) {
+        throw new Error(`Duplicate document ID: ${document[this.idField]}`);
       }
 
-      if (this.enableAutocomplete) {
+      const internalDocId = this.searchIndex.originalDocumentIds.length + i;
+      change.addedOriginalDocumentIds.push(document[this.idField]);
+
+      for (const field of Object.keys(document)) {
+        if (
+          field === this.idField ||
+          (this.indexedFields && !this.indexedFields.includes(field))
+        ) {
+          continue;
+        }
+
+        let fieldId = [
+          ...this.searchIndex.fields,
+          ...change.addedFields,
+        ].findIndex((f) => f === field);
+        if (fieldId < 0) {
+          fieldId = this.searchIndex.fields.length + change.addedFields.length;
+          change.addedFields.push(field);
+        }
+
+        const fieldTokens: string[] = [];
+
+        // the unprocessed tokens are only for fuzyy search / autocomplete,
+        // so their frequency doesn't matter and we use a set
+        const fieldTokensRaw: Set<string> = new Set<string>();
+
+        this.tokenizer(document[field]).forEach((rawToken) => {
+          const token = this.analyzer(rawToken);
+          if (!token) return;
+          fieldTokens.push(token);
+          if (this.enableAutocomplete) fieldTokensRaw.add(rawToken);
+        });
+
+        change.addedDocLengths[internalDocId] ??= {};
+        change.addedTotalDocLengthsByFieldId[fieldId] ??= 0;
+        change.addedDocCountsByFieldId[fieldId] ??= 0;
+
+        change.addedDocLengths[internalDocId][fieldId] = fieldTokens.length;
+        change.addedTotalDocLengthsByFieldId[fieldId] += fieldTokens.length;
+        change.addedDocCountsByFieldId[fieldId]++;
+
+        const fieldTokenFreqs = fieldTokens.reduce(
+          (acc: { [token: string]: number }, token: string) => {
+            acc[token] = (acc[token] || 0) + 1;
+            return acc;
+          },
+          {},
+        );
+
         for (const rawToken of fieldTokensRaw) {
           // raw tokens are indexed only for fuzzy search / autocomplete
           // make sure they are marked with 1
           const rawTokenLower = rawToken.toLowerCase();
-          this.searchIndex.termTree.insert(rawTokenLower);
-          const node = this.searchIndex.termTree.lookup(rawTokenLower, true);
-          assert(!!node, 'node is undefined');
-          node.v ??= [];
-          if (node.v[0] !== 1) node.v.unshift(1);
+          change.addedTermTreeLeaves[rawTokenLower] ??= [];
+          if (change.addedTermTreeLeaves[rawTokenLower][0] !== 1) {
+            change.addedTermTreeLeaves[rawTokenLower].unshift(1);
+          }
         }
+
+        for (const [token, frequency] of Object.entries(fieldTokenFreqs)) {
+          const tokenInfo: TokenInfo = [internalDocId, fieldId, frequency];
+          change.addedTermTreeLeaves[token] ??= [];
+          change.addedTermTreeLeaves[token].push(tokenInfo);
+        }
+      }
+
+      if (this.keepDocuments) {
+        change.addedDocsById ??= {};
+        change.addedDocsById[internalDocId] = document;
       }
     }
 
-    if (this.keepDocuments) {
-      this.searchIndex.docsById[internalDocId] = document;
-    }
+    return {
+      version: this.searchIndex.version + 1,
+      changes: [change],
+    };
+  }
 
-    this.searchIndex.docCount++;
+  /**
+   * Applies a patch to the index. This will update the index in place.
+   * The patch must have been created from the current index (not necessarily the same instance, though)
+   * and there must not have been a different patch of the same version applied to this instance already.
+   *
+   * @param patch The patch to apply.
+   */
+  applyPatch(patch: Patch<T>): void {
+    assert(
+      this.searchIndex.version === patch.version - 1,
+      `Expected patch to have version ${this.searchIndex.version}, got: ${patch.version}`,
+    );
+
+    this.searchIndex.version = patch.version;
+    for (const change of patch.changes) {
+      assert(change.type === 'add', 'change type must be add');
+
+      this.searchIndex.fields.push(...change.addedFields);
+      this.searchIndex.originalDocumentIds.push(
+        ...change.addedOriginalDocumentIds,
+      );
+      for (const [token, values] of Object.entries(
+        change.addedTermTreeLeaves,
+      )) {
+        if (values[0] === 1) {
+          this.searchIndex.termTree.insert(token);
+          const node = this.searchIndex.termTree.lookup(token, true);
+          assert(!!node, 'node is undefined');
+          node.v ??= [];
+          if (node.v[0] !== 1) node.v.unshift(1);
+          const tokenInfos = values.slice(1);
+          this.searchIndex.termTree.insertNoFuzzy(token, ...tokenInfos);
+        } else {
+          this.searchIndex.termTree.insertNoFuzzy(token, ...values);
+        }
+      }
+      this.searchIndex.docLengths = {
+        ...this.searchIndex.docLengths,
+        ...change.addedDocLengths,
+      };
+      for (const [fieldId, addedLength] of Object.entries(
+        change.addedTotalDocLengthsByFieldId,
+      )) {
+        this.searchIndex.totalDocLengthsByFieldId[Number(fieldId)] =
+          (this.searchIndex.totalDocLengthsByFieldId[Number(fieldId)] ?? 0) +
+          addedLength;
+      }
+      for (const [fieldId, addedCount] of Object.entries(
+        change.addedDocCountsByFieldId,
+      )) {
+        this.searchIndex.docCountsByFieldId[Number(fieldId)] =
+          (this.searchIndex.docCountsByFieldId[Number(fieldId)] ?? 0) +
+          addedCount;
+      }
+      this.searchIndex.docCount += patch.changes[0].addedDocCount;
+      this.searchIndex.docsById = {
+        ...this.searchIndex.docsById,
+        ...change.addedDocsById,
+      };
+    }
   }
 
   /**
    * Inserts multiple documents into the index.
    * @param documents The documents to insert.
    */
-  insertMultipleDocuments(documents: T[]) {
-    for (const document of documents) {
-      this.insertDocument(document);
-    }
+  insertDocument(document: T): void {
+    this.insertMultipleDocuments([document]);
+  }
+
+  /**
+   * Inserts a document into the index.
+   * @param document The document to insert.
+   */
+  insertMultipleDocuments(documents: T[]): void {
+    this.applyPatch(this.createPatch({ add: documents }));
   }
 
   /**

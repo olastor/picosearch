@@ -9,6 +9,12 @@ export type TokenInfo = [
 export type RawTokenMarker = 1;
 
 export interface SearchIndex<T extends PicosearchDocument> {
+  // incremented when the format of the index changes
+  specVersion: 1;
+
+  // incremented when the index is changed
+  version: number;
+
   // unique list of field names, the index will be used as field ID
   fields: string[];
 
@@ -34,6 +40,23 @@ export interface SearchIndex<T extends PicosearchDocument> {
   // by document ID, get the document
   docsById: { [documentId: number]: T };
 }
+
+export type PatchChange<T extends PicosearchDocument> = {
+  type: 'add';
+  addedFields: string[];
+  addedOriginalDocumentIds: string[];
+  addedTermTreeLeaves: { [token: string]: (TokenInfo | RawTokenMarker)[] };
+  addedDocLengths: { [documentId: number]: { [fieldId: number]: number } };
+  addedDocsById?: { [documentId: number]: T };
+  addedTotalDocLengthsByFieldId: { [fieldId: number]: number };
+  addedDocCountsByFieldId: { [fieldId: number]: number };
+  addedDocCount: number;
+};
+
+export type Patch<T extends PicosearchDocument> = {
+  version: number;
+  changes: PatchChange<T>[];
+};
 
 export type GetDocumentById<T extends PicosearchDocument> = (
   documentId: string,
@@ -213,6 +236,8 @@ export type AutocompleteOptions = {
 };
 
 export interface IPicosearch<T extends PicosearchDocument> {
+  createPatch: ({ add }: { add: T[] }) => Patch<T>;
+  applyPatch: (patch: Patch<T>) => void;
   insertDocument: (document: T) => void;
   insertMultipleDocuments: (documents: T[]) => void;
   searchDocuments: {
