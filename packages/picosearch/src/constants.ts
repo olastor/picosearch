@@ -1,19 +1,14 @@
-export const DEFAULT_QUERY_OPTIONS = {
-  bm25: {
-    k1: 1.2,
-    b: 0.75,
-  },
-  maxExpansions: 5,
-  highlightTag: {
-    before: '<b>',
-    after: '</b>',
-  },
-} as const;
-
-export const DEFAULT_AUTOCOMPLETE_OPTIONS = {
-  method: 'prefix',
-  fuzziness: 'AUTO',
-  limit: 10,
-} as const;
+import type { ParsedOptions } from './schemas';
 
 export const DEFAULT_ID_FIELD = 'id';
+
+export const DEFAULT_STORAGE_DRIVER_KEY = 'picosearch';
+
+export const UNSERIALIZABLE_OPTIONS = [
+  'storageDriver',
+  'tokenizer',
+  'analyzer',
+  'getDocumentById',
+] satisfies (keyof ParsedOptions<any>)[];
+
+export const DEFAULT_MAX_VERSION_UPDATES = 1000;

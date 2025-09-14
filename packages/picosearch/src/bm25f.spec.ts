@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { scoreBM25F } from './bm25f';
-import type { PicosearchDocument, SearchIndex } from './types';
+import type { SearchIndex } from './schemas';
+import type { Document } from './types';
 
 describe('scoreBM25F', () => {
   it('calculates scores for documents correctly', () => {
-    interface TestDoc extends PicosearchDocument {}
+    interface TestDoc extends Document {}
     const queryTokens = new Set(['test']);
     const index: Partial<SearchIndex<TestDoc>> = {
       originalDocumentIds: ['0', '1'],

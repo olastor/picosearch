@@ -6,7 +6,6 @@ Minimalistic full-text search implemented in Typescript.
 &nbsp;&nbsp;&nbsp;&nbsp;🈯 Fully typed with TypeScript <br />
 &nbsp;&nbsp;&nbsp;&nbsp;🧐 Benchmark tests in CI/CD <br />
 &nbsp;&nbsp;&nbsp;&nbsp;♻️ JSON-serializable indexes <br />
-&nbsp;&nbsp;&nbsp;&nbsp;🌑 Zero runtime dependencies (in the core package) <br />
 
 ## Installation
 

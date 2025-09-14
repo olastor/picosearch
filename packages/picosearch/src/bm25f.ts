@@ -1,4 +1,5 @@
-import type { PicosearchDocument, SearchIndex, SearchResult } from './types';
+import type { SearchIndex } from './schemas';
+import type { Document } from './types';
 
 /**
  * Calculates scores for documents matching the query tokens and returns a ranked list of most
@@ -9,7 +10,7 @@ import type { PicosearchDocument, SearchIndex, SearchResult } from './types';
  * [2] https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-combined-fields-query.html
  * [3] https://arxiv.org/pdf/0911.5046.pdf
  */
-export const scoreBM25F = <T extends PicosearchDocument>(
+export const scoreBM25F = <T extends Document>(
   queryTokens: Set<string>,
   index: SearchIndex<T>,
   fieldWeights: { [fieldId: number]: number },

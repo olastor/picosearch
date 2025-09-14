@@ -1,6 +1,6 @@
 {
   "name": "@picosearch/picosearch",
-  "version": "3.0.0-rc.3",
+  "version": "3.0.0-rc.4",
   "description": "Minimalistic full-text search, zero dependencies, local-first, browser-compatible.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -27,12 +27,14 @@
   "author": "Sebastian Kussl",
   "license": "MIT",
   "dependencies": {
-    "@picosearch/radix-bk-tree": "workspace: *"
+    "@picosearch/radix-bk-tree": "^0.2.0",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@fast-check/vitest": "^0.2.1",
     "@picosearch/language-english": "workspace: *",
     "@types/unzipper": "^0.10.11",
+    "nock": "^14.0.10",
     "unzipper": "^0.12.3"
   },
   "homepage": "https://github.com/olastor/picosearch#readme",

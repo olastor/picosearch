@@ -1,15 +1,9 @@
 import { fc, test } from '@fast-check/vitest';
 import * as englishAnalyzerOptions from '@picosearch/language-english';
+import nock from 'nock';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Picosearch } from './index';
-import type {
-  Analyzer,
-  IPicosearch,
-  PicosearchDocument,
-  QueryOptions,
-  SearchResult,
-  SearchResultWithDoc,
-} from './types';
+import type { IPicosearch, SearchResult, SearchResultWithDoc } from './types';
 
 describe('Picosearch', () => {
   let searchIndex: IPicosearch<{ id: string; title: string; content: string }>;
@@ -119,18 +113,17 @@ describe('Picosearch', () => {
         content: 'from function',
       };
       const searchIndex = new Picosearch({
+        keepDocuments: false,
         getDocumentById: (id: string) => Promise.resolve(docFromFunction),
       });
       searchIndex.insertDocument(document);
-      const results: SearchResultWithDoc<{
-        id: string;
-        title: string;
-        content: string;
-      }>[] = await searchIndex.searchDocuments('hello', { includeDocs: true });
+      const results = await searchIndex.searchDocuments('hello', {
+        includeDocs: true,
+      });
       expect(results[0].doc).toEqual(docFromFunction);
     });
 
-    it('should use getDocumentById from options if provided', async () => {
+    it('should use getDocumentById from query options if provided', async () => {
       const document = {
         id: '1',
         title: 'hello world',
@@ -429,5 +422,150 @@ describe('Picosearch', () => {
         expect(index2.toJSON()).toEqual(json);
       },
     );
+  });
+
+  describe('sync()', () => {
+    const getMemoryStorageDriver = () => {
+      let storage = '';
+      return {
+        get: () => Promise.resolve(storage),
+        persist: (value: string) => {
+          storage = value;
+          return Promise.resolve();
+        },
+        delete: () => Promise.resolve(),
+      };
+    };
+
+    const documents = [
+      { id: '1', title: 'greetings world', content: 'hello' },
+      { id: '2', title: 'farewell', content: 'goodbye world' },
+      { id: '3', title: 'say goodbye', content: 'goodbye to you' },
+      { id: '4', title: 'say hello', content: 'hello to you' },
+    ];
+
+    it('should not sync to the local storage in dry run', async () => {
+      const storage = getMemoryStorageDriver();
+      const searchIndex = new Picosearch({
+        storageDriver: {
+          type: 'custom',
+          driver: storage,
+        },
+      });
+      searchIndex.insertMultipleDocuments(documents);
+      expect(await storage.get()).toEqual('');
+      const result = await searchIndex.sync({ dryRun: true });
+      expect(result.hasWrittenToStorage).toBe(false);
+      expect(result.hasLoadedIndexFromStorage).toBe(false);
+      expect(result.hasLoadedIndexFromRemote).toBe(false);
+      expect(result.numberOfAppliedPatches).toBe(0);
+      expect(result.bytesLoaded).toBe(0);
+      expect(await storage.get()).toEqual('');
+    });
+
+    it('should sync to the local storage', async () => {
+      const storage = getMemoryStorageDriver();
+      const searchIndex = new Picosearch({
+        storageDriver: {
+          type: 'custom',
+          driver: storage,
+        },
+      });
+      searchIndex.insertMultipleDocuments(documents);
+      expect(await storage.get()).toEqual('');
+      const result = await searchIndex.sync();
+      expect(result.hasWrittenToStorage).toBe(true);
+      expect(result.hasLoadedIndexFromStorage).toBe(false);
+      expect(result.hasLoadedIndexFromRemote).toBe(false);
+      expect(result.numberOfAppliedPatches).toBe(0);
+      expect(result.bytesLoaded).toBe(0);
+      expect(await storage.get()).toEqual(searchIndex.toJSON());
+    });
+
+    it('should not try to fetch when offline is true', async () => {
+      const storage = getMemoryStorageDriver();
+      const searchIndex = new Picosearch({
+        indexUrl: 'https://example.com/index.json',
+        storageDriver: {
+          type: 'custom',
+          driver: storage,
+        },
+      });
+      searchIndex.insertMultipleDocuments(documents);
+      const result = await searchIndex.sync({ offline: true });
+      expect(result.hasWrittenToStorage).toBe(true);
+      expect(result.hasLoadedIndexFromStorage).toBe(false);
+      expect(result.hasLoadedIndexFromRemote).toBe(false);
+      expect(result.numberOfAppliedPatches).toBe(0);
+      expect(result.bytesLoaded).toBe(0);
+    });
+
+    it('should fetch the index from the remote url if index is empty', async () => {
+      const indexUrl = 'https://example.com/index.json';
+
+      const memoryStorage = getMemoryStorageDriver();
+      const searchIndex = new Picosearch({
+        indexUrl,
+        storageDriver: { type: 'custom', driver: memoryStorage },
+      });
+      const remoteIndex = searchIndex.clone();
+      remoteIndex.insertMultipleDocuments(documents);
+      const remoteIndexJson = remoteIndex.toJSON();
+      nock('https://example.com/')
+        .get('/index.json')
+        .reply(200, remoteIndexJson);
+
+      const result = await searchIndex.sync();
+      expect(result.hasWrittenToStorage).toBe(true);
+      expect(result.hasLoadedIndexFromStorage).toBe(false);
+      expect(result.hasLoadedIndexFromRemote).toBe(true);
+      expect(result.numberOfAppliedPatches).toBe(0);
+      expect(result.bytesLoaded).toBe(remoteIndexJson.length);
+
+      const searchIndexJson = searchIndex.toJSON();
+      expect(searchIndexJson).toEqual(remoteIndexJson);
+      expect(await memoryStorage.get()).toEqual(searchIndexJson);
+    });
+
+    it('should fetch patches from the remote url if index is not empty', async () => {
+      const indexUrl = 'https://example.com/index.json';
+      const patchUrl = 'https://example.com/patches/v{version}.json';
+
+      const memoryStorage = getMemoryStorageDriver();
+      const searchIndex = new Picosearch({
+        indexUrl,
+        patchUrl,
+        storageDriver: { type: 'custom', driver: memoryStorage },
+      });
+      searchIndex.insertMultipleDocuments(documents.slice(0, 2));
+      await searchIndex.persist();
+
+      const remoteIndex = Picosearch.fromJSON(searchIndex.toJSON());
+      const patch1 = remoteIndex.createPatch({ add: [documents[2]] });
+      remoteIndex.applyPatch(patch1);
+      const patch2 = remoteIndex.createPatch({ add: [documents[3]] });
+      remoteIndex.applyPatch(patch2);
+
+      nock('https://example.com/')
+        .get(/\/patches\/v\d+\.json/)
+        .times(3)
+        .reply((uri) => {
+          const version = uri.match(/\/patches\/v(\d+)\.json/)?.[1];
+          if (version === '1') return [200, patch1];
+          if (version === '2') return [200, patch2];
+          return [404];
+        });
+
+      const result = await searchIndex.sync();
+      expect(result.hasWrittenToStorage).toBe(true);
+      expect(result.hasLoadedIndexFromStorage).toBe(false);
+      expect(result.hasLoadedIndexFromRemote).toBe(false);
+      expect(result.numberOfAppliedPatches).toBe(2);
+      expect(result.bytesLoaded).toBeGreaterThan(0);
+
+      const searchIndexJson = searchIndex.toJSON();
+      expect(searchIndexJson).toEqual(remoteIndex.toJSON());
+      expect(await memoryStorage.get()).toEqual(searchIndexJson);
+    });
   });
 });

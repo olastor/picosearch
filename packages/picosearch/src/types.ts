@@ -1,5 +1,14 @@
-import type { MinifiedNode, RadixBKTreeMap } from '@picosearch/radix-bk-tree';
+import type { MinifiedNode } from '@picosearch/radix-bk-tree';
+import type { UNSERIALIZABLE_OPTIONS } from './constants';
+import type {
+  AutocompleteOptions,
+  Options,
+  QueryOptions,
+  SearchIndex,
+  SyncOptions,
+} from './schemas';
 
+// TODO: consider using bit-packing
 export type TokenInfo = [
   internalDocumentId: number,
   fieldId: number,
@@ -8,40 +17,12 @@ export type TokenInfo = [
 
 export type RawTokenMarker = 1;
 
-export interface SearchIndex<T extends PicosearchDocument> {
-  // incremented when the format of the index changes
-  specVersion: 1;
+// TODO: patch type modify
+// TODO: patch type delete
+// TODO: patch type gone
+// TODO: patch type invalidate (maybe)
 
-  // incremented when the index is changed
-  version: number;
-
-  // unique list of field names, the index will be used as field ID
-  fields: string[];
-
-  // list of document IDs as passed by the user, the index will be used as document reference ID for all internal operations to be space efficient
-  originalDocumentIds: string[];
-
-  // tree to lookup both token info for BM25 and raw words for fuzzy/prefix matches;
-  // if a leaf is a raw token, it is marked by 1 in the first element of the node values
-  termTree: RadixBKTreeMap<TokenInfo | RawTokenMarker>;
-
-  // by document ID, get the (token-)length by the field ID
-  docLengths: { [documentId: number]: { [fieldId: number]: number } };
-
-  // by field ID get the total (token-)length (for this field) across all documents
-  totalDocLengthsByFieldId: { [fieldId: number]: number };
-
-  // by field ID get the number of documents with that field
-  docCountsByFieldId: { [fieldId: number]: number };
-
-  // the total number of documents
-  docCount: number;
-
-  // by document ID, get the document
-  docsById: { [documentId: number]: T };
-}
-
-export type PatchChange<T extends PicosearchDocument> = {
+export type PatchChange<T extends Document> = {
   type: 'add';
   addedFields: string[];
   addedOriginalDocumentIds: string[];
@@ -53,77 +34,18 @@ export type PatchChange<T extends PicosearchDocument> = {
   addedDocCount: number;
 };
 
-export type Patch<T extends PicosearchDocument> = {
+export type Patch<T extends Document> = {
   version: number;
+  // TODO: consider adding checksum or reference ID for index
   changes: PatchChange<T>[];
 };
 
-export type GetDocumentById<T extends PicosearchDocument> = (
+export type GetDocumentById<T extends Document> = (
   documentId: string,
 ) => Promise<T | null>;
 
-export type PicosearchOptions<T extends PicosearchDocument> = {
-  /**
-   * The tokenizer to use for tokenizing documents.
-   *
-   * @default The default
-   */
-  tokenizer?: Tokenizer;
-
-  /**
-   * The analyzer to use for analyzing documents.
-   *
-   * @default The default analyzer
-   */
-  analyzer?: Analyzer;
-
-  /**
-   * Whether to keep the documents in the index. Not keeping documents in the index will save much space.
-   *
-   * @default false
-   */
-  keepDocuments?: boolean;
-
-  /**
-   * A function to get a document by its ID.
-   * This can be used when `keepDocuments` is false to load documents at query time dynamically.
-   *
-   * @default undefined
-   */
-  getDocumentById?: GetDocumentById<T>;
-
-  /**
-   * The search index to use.
-   *
-   * @default A new search index
-   */
-  searchIndex?: SearchIndex<T>;
-
-  /**
-   * The field to use as document ID.
-   *
-   * @default 'id'
-   */
-  idField?: keyof T;
-
-  /**
-   * Whether to enable autocomplete feature. When turned on, the autocomplete() method
-   * will be available, but the index will also be significantly larger as the raw words
-   * need to be stored for fuzzy/prefix matching.
-   *
-   * @default false
-   */
-  enableAutocomplete?: boolean;
-
-  /**
-   * The text fields to index. If specified, only these fields can be searched.
-   *
-   * @default All fields except the ID.
-   */
-  indexedFields?: (keyof T)[];
-};
-
-export type PicosearchDocument = Record<string, string>;
+// TODO: allow more complex documents structures
+export type Document = Record<string, string>;
 
 export type Preprocessor = (doc: string) => string[];
 
@@ -132,134 +54,62 @@ export type SearchResult = {
   score: number;
 };
 
-export type SearchResultWithDoc<T extends PicosearchDocument> = SearchResult & {
+export type SearchResultWithDoc<T extends Document> = SearchResult & {
   doc: T | null;
 };
 
-export type QueryOptions<T extends PicosearchDocument> = {
-  /**
-   * Whether to include the documents in the search results.
-   */
-  includeDocs?: boolean;
-
-  /**
-   * The fields to search in.
-   *
-   * You can apply boosting to specific fields by using the syntax `fieldName^weight`. For example, `title^2` will boost the `title` field by a factor of 2.
-   *
-   * @default All fields
-   */
-  fields?: string[];
-
-  /**
-   * The maximum number of results to return.
-   */
-  limit?: number;
-
-  /**
-   * The offset to start from (for pagination).
-   */
-  offset?: number;
-
-  /**
-   * The BM25 parameters.
-   */
-  bm25?: { k1?: number; b?: number };
-
-  /**
-   * The fuzziness to use for fuzzy matching. Valid values are non-negative numbers or 'AUTO'.
-   *
-   * If set to a number, it will be used as the maximum edit distance allowed for fuzzy matching.
-   * If set to 'AUTO', the fuzziness will be calculated automatically based on the length of the query.
-   *
-   * @default 'AUTO'
-   */
-  fuzziness?: number | 'AUTO';
-
-  /**
-   * The maximum number of expansions to use for fuzzy matching.
-   * More expansions increase the number of possible words to match,
-   * thus a higher number will yield more results but also take longer.
-   */
-  maxExpansions?: number;
-
-  /**
-   * A function to get a document by its ID. This can be used when `keepDocuments` is false to load documents at dynamically.
-   * This overrides any `getDocumentById` passed to the constructor only for this query.
-   */
-  getDocumentById?: GetDocumentById<T>;
-
-  /**
-   * The fields to highlight in the documents.
-   */
-  highlightedFields?: (keyof T)[];
-
-  /**
-   * The tags to use for highlighting.
-   */
-  highlightTag?: {
-    /**
-     * The tag to use before the highlighted text.
-     *
-     * @default '<b>'
-     */
-    before: string;
-    /**
-     * The tag to use after the highlighted text.
-     *
-     * @default '</b>'
-     */
-    after: string;
-  };
-};
-
-export type AutocompleteOptions = {
-  /**
-   * The method to use for autocomplete.
-   */
-  method: 'prefix' | 'fuzzy';
-
-  /**
-   * The fuzziness to use for fuzzy matching. Only used if `method` is 'fuzzy'.
-   *
-   * If set to a number, it will be used as the maximum edit distance allowed for fuzzy matching.
-   * If set to 'AUTO', the fuzziness will be calculated automatically based on the length of the query.
-   *
-   * @default 'AUTO'
-   */
-  fuzziness?: number | 'AUTO';
-
-  /**
-   * The maximum number of results to return.
-   */
-  limit?: number;
-};
-
-export interface IPicosearch<T extends PicosearchDocument> {
-  createPatch: ({ add }: { add: T[] }) => Patch<T>;
-  applyPatch: (patch: Patch<T>) => void;
+export interface IPicosearch<T extends Document> {
   insertDocument: (document: T) => void;
   insertMultipleDocuments: (documents: T[]) => void;
+
   searchDocuments: {
     (
       query: string,
-      options?: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs?: false },
+      options?: Omit<QueryOptions, 'includeDocs'> & { includeDocs?: false },
     ): Promise<SearchResult[]>;
     (
       query: string,
-      options: Omit<QueryOptions<T>, 'includeDocs'> & { includeDocs: true },
+      options: Omit<QueryOptions, 'includeDocs'> & { includeDocs: true },
     ): Promise<SearchResultWithDoc<T>[]>;
   };
   autocomplete: (prefix: string, options?: AutocompleteOptions) => string[];
+
+  sync: (options?: SyncOptions) => Promise<SyncResult>;
+  persist: () => Promise<{ success: boolean }>;
+  createPatch: ({ add }: { add: T[] }) => Patch<T>;
+  applyPatch: (patch: Patch<T>, updateVersion?: boolean) => void;
+
+  getDocCount: () => number;
+  clone: () => IPicosearch<T>;
   toJSON: () => string;
 }
+
+export type IStorageDriver = {
+  get: () => Promise<string>;
+  persist: (value: string) => Promise<void>;
+  delete: () => Promise<void>;
+};
 
 export type Analyzer = (token: string) => string;
 export type Tokenizer = (doc: string) => string[];
 
-export type SerializedInstance<T extends PicosearchDocument> = {
+export type UnserializableOptions = (typeof UNSERIALIZABLE_OPTIONS)[number];
+export type SerializedInstance<T extends Document> = {
   index: Omit<SearchIndex<T>, 'termTree'> & {
     termTree: MinifiedNode<RawTokenMarker | [number, number, number]>;
   };
-  opts: Omit<PicosearchOptions<T>, 'tokenizer' | 'analyzer' | 'jsonIndex'>;
+  opts: Omit<Options<T>, UnserializableOptions | 'searchIndex'>;
+};
+
+export type FetchMetadata = {
+  success: boolean;
+  bytesLoaded: number;
+};
+
+export type SyncResult = {
+  hasLoadedIndexFromStorage: boolean;
+  hasWrittenToStorage: boolean;
+  hasLoadedIndexFromRemote: boolean;
+  numberOfAppliedPatches: number;
+  bytesLoaded: number;
 };

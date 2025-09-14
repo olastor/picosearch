@@ -2,7 +2,6 @@ import { fc, test } from '@fast-check/vitest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { NODE_KEYS } from './constants';
 import { RadixBKTreeMap } from './radix-bk-tree-map';
-import type { RadixBKTreeMapNode } from './types';
 import { isEqualTreeStrict, traverseRadix } from './util';
 
 fc.configureGlobal({ numRuns: 100 });

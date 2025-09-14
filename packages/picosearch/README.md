@@ -6,7 +6,6 @@ Minimalistic full-text search implemented in Typescript.
 &nbsp;&nbsp;&nbsp;&nbsp;🈯 Fully typed with TypeScript <br />
 &nbsp;&nbsp;&nbsp;&nbsp;🧐 Benchmark tests in CI/CD <br />
 &nbsp;&nbsp;&nbsp;&nbsp;♻️ JSON-serializable indexes <br />
-&nbsp;&nbsp;&nbsp;&nbsp;🌑 Zero runtime dependencies (in the core package) <br />
 
 ## Installation
 
@@ -49,6 +48,13 @@ console.log(pico.searchDocuments('fox'));
 ```
 
 Please note that currently, a document must be flat, can only contain string values, and needs an `id` field (also a string)!
+
+## Syncing
+
+Picosearch natively supports syncing with a local storage and a remote file server (read only). Both of these components are optional.
+
+TODO: add docs
+
 
 ## Language-specific Preprocessing
 

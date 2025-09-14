@@ -1,5 +1,5 @@
 import { fc, test } from '@fast-check/vitest';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { highlightText } from './highlight';
 
 fc.configureGlobal({ numRuns: 100 });
