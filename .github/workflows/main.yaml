@@ -54,7 +54,7 @@ jobs:
         working-directory: packages/picosearch
 
   deploy-npm-registry:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/')
     needs: [test, benchmark]
     permissions:
       contents: read
