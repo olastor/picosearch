@@ -109,6 +109,7 @@ const evaluateDataset = async (corpusName: string): Promise<number> => {
     ...englishOptions,
     keepDocuments: false,
     enableAutocomplete: false,
+    getDocumentById: () => null,
   });
   index.insertMultipleDocuments(docs);
   console.timeEnd(indexTag);
@@ -122,6 +123,7 @@ const evaluateDataset = async (corpusName: string): Promise<number> => {
     if (typeof qrels[query._id] === 'undefined') continue;
     count++;
     const hits = await index.searchDocuments(query.text, {
+      limit: 10,
       bm25: { b: 0.75, k1: 1.2 },
     });
     ndcgSum += calculateNdcg10(query._id, qrels, hits);
