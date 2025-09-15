@@ -1,6 +1,7 @@
 import { RadixBKTreeMap } from '@picosearch/radix-bk-tree';
 import { z } from 'zod';
 import { type Document, defaultAnalyzer, defaultTokenizer } from '.';
+import { LANGUAGE_NAMES, PROCESSORS_BY_LANGUAGE } from './constants';
 import type { RawTokenMarker, TokenInfo } from './types';
 
 // TODO: consider switching to zod/mini
@@ -96,9 +97,17 @@ export type SearchIndex<T extends Document> = z.input<
   docsById: { [documentId: number]: T };
 };
 
-// TODO: add language option
 export const OptionsSchema = z
   .object({
+    /**
+     * The language to use for indexing and search.
+     * Specifying a language will override the tokenizer and analyzer.
+     * Currently supported languages are:
+     * - english
+     * - german
+     */
+    language: z.enum(LANGUAGE_NAMES).optional(),
+
     /**
      * The tokenizer to use for tokenizing documents.
      *
@@ -193,7 +202,17 @@ export const OptionsSchema = z
     {
       error: 'getDocumentById is not allowed when keepDocuments is true',
     },
-  );
+  )
+  .transform((opts) => {
+    if (opts.language) {
+      return {
+        ...opts,
+        tokenizer: PROCESSORS_BY_LANGUAGE[opts.language].tokenizer,
+        analyzer: PROCESSORS_BY_LANGUAGE[opts.language].analyzer,
+      };
+    }
+    return opts;
+  });
 
 export type Options<T extends Document> = z.input<typeof OptionsSchema> & {
   searchIndex?: SearchIndex<T>;

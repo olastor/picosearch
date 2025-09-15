@@ -27,12 +27,13 @@
   "author": "Sebastian Kussl",
   "license": "MIT",
   "dependencies": {
+    "@picosearch/language-english": "^1.0.1",
+    "@picosearch/language-german": "^1.0.1",
     "@picosearch/radix-bk-tree": "^0.2.0",
     "zod": "^4.1.5"
   },
   "devDependencies": {
     "@fast-check/vitest": "^0.2.1",
-    "@picosearch/language-english": "workspace: *",
     "@types/unzipper": "^0.10.11",
     "nock": "^14.0.10",
     "unzipper": "^0.12.3"

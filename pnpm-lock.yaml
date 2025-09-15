@@ -60,6 +60,12 @@ importers:
 
   packages/picosearch:
     dependencies:
+      '@picosearch/language-english':
+        specifier: ^1.0.1
+        version: 1.0.1
+      '@picosearch/language-german':
+        specifier: ^1.0.1
+        version: 1.0.1
       '@picosearch/radix-bk-tree':
         specifier: ^0.2.0
         version: 0.2.0
@@ -70,9 +76,6 @@ importers:
       '@fast-check/vitest':
         specifier: ^0.2.1
         version: 0.2.1(vitest@3.2.2(@types/node@22.15.30))
-      '@picosearch/language-english':
-        specifier: 'workspace: *'
-        version: link:../language-english
       '@types/unzipper':
         specifier: ^0.10.11
         version: 0.10.11
@@ -318,6 +321,12 @@ packages:
 
   '@open-draft/until@2.1.0':
     resolution: {integrity: sha512-U69T3ItWHvLwGg5eJ0n3I62nWuE6ilHlmz7zM0npLBRvPRd7e6NYmg54vvRtP5mZG7kZqZCFVdsTWo7BPtBujg==}
+
+  '@picosearch/language-english@1.0.1':
+    resolution: {integrity: sha512-nr4NCnwgvCgmHhSGOTJqDuswrMl5f0zoZGWKN8K32j3qETck1qTeBNi7Qz2zZidYTBvPz++0TpE3G8KkjQ6/yA==}
+
+  '@picosearch/language-german@1.0.1':
+    resolution: {integrity: sha512-c11Fd/BPJ0CnftaJgH9bUpkCEjJra+/YlitQz8Htfx19fl//0Blw2VExWfuoXLNdjtS5ehC8UK7gI3s0mxMr/w==}
 
   '@picosearch/radix-bk-tree@0.2.0':
     resolution: {integrity: sha512-x5hhyiQiZsaTaDP+MG1RGhUVmm+ZgQ8AP7TBOHHdmPdKlVZWAf75QFqBw2bPyDumtiVyhXLt6boKwf6O7yyNcQ==}
@@ -907,6 +916,15 @@ snapshots:
       outvariant: 1.4.3
 
   '@open-draft/until@2.1.0': {}
+
+  '@picosearch/language-english@1.0.1':
+    dependencies:
+      porter-stemmer: 0.9.1
+      stopword: 3.1.4
+
+  '@picosearch/language-german@1.0.1':
+    dependencies:
+      stopword: 3.1.4
 
   '@picosearch/radix-bk-tree@0.2.0':
     dependencies:
