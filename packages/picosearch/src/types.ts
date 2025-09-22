@@ -35,6 +35,7 @@ export type PatchChange<T extends Document> = {
 };
 
 export type Patch<T extends Document> = {
+  indexId: string;
   version: number;
   // TODO: consider adding checksum or reference ID for index
   changes: PatchChange<T>[];

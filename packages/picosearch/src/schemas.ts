@@ -44,6 +44,11 @@ const SearchIndexSchema = z.object({
   specVersion: z.literal(1),
 
   /**
+   * A random string to identify the index
+   */
+  id: z.string(),
+
+  /**
    * Incremented when the index is changed
    */
   version: z.number().positive(),

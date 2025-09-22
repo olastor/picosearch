@@ -104,6 +104,7 @@ export const createPatch =
     }
 
     return {
+      indexId: searchIndex.id,
       version: searchIndex.version + 1,
       changes: [change],
     };
@@ -112,6 +113,11 @@ export const createPatch =
 export const applyPatch =
   <T extends Document>(searchIndex: SearchIndex<T>, updateVersion = true) =>
   (patch: Patch<T>): void => {
+    assert(
+      searchIndex.id === patch.indexId,
+      `Expected patch to have index ID ${searchIndex.id}, got: ${patch.indexId}`,
+    );
+
     assert(
       searchIndex.version === patch.version - 1,
       `Expected patch to have version ${searchIndex.version + 1}, got: ${patch.version}`,

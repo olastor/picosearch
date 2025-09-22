@@ -52,6 +52,7 @@ export function omit<T, TKeys extends keyof T>(
 }
 
 export const getEmptyIndex = <T extends Document>(): SearchIndex<T> => ({
+  id: generateRandomString(),
   specVersion: 1,
   version: 0,
   originalDocumentIds: [],
@@ -130,4 +131,22 @@ export async function fetchFromRemote<T>(
   const buffer = await response.arrayBuffer();
   const data = JSON.parse(new TextDecoder().decode(buffer)) as T;
   return { data, success: true, bytesLoaded: buffer.byteLength };
+}
+
+/**
+ * Generate a random string of specified length
+ *
+ * @param length - The length of the random string to generate (default: 10)
+ * @param charset - The character set to use (default: alphanumeric)
+ * @returns A random string
+ */
+export function generateRandomString(
+  length = 12,
+  charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+): string {
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return result;
 }
