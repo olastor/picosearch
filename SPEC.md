@@ -36,6 +36,8 @@ In the local context (e.g. browser), the search index may not only live in-memor
 
 **Example:**
 
+![Example Deployment](./docs/images/example-deployment.png)
+
 ## Syncing
 
 Picosearch has an opinionated syncing API that assumes remote files are being stored on simple static file servers. Local storage drivers for the browser context are included, but custom drivers can be easily written by implementing the simple interface. However, fetching patch files via other protocals than HTTP(S) is currently not supported (documents can still be fetched via any async function).
@@ -54,8 +56,9 @@ Inside a Picosearch instance, the following information for remote fetching can 
 
 In case there is a persistent storage configured, the index is first tried to load from there. If it is not found, it is fetched from the remote storage. If it is found, then Picosearch tries to fetch patches with an incremented version number until no more are found.
 
-**Note:** The index file stored on the remote storage should always be kept up-to-date, such that it has the same version as the last available patch. Picosearch will not try to fetch update patches when the entire index is fetched.
+![Example Deployment](./docs/images/fetch-cache.png)
 
+**Note:** The index file stored on the remote storage should always be kept up-to-date, such that it has the same version as the last available patch. Picosearch will not try to fetch update patches when the entire index is fetched.
 
 **Without Local Storage**
 
