@@ -62,7 +62,7 @@ In case there is a persistent storage configured, the index is first tried to lo
 
 **Without Local Storage**
 
-This scenario is identical to the above, where everytime there is a "cache miss".
+This scenario is identical to the above, where everytime there is a "cache miss" without persisting anything.
 
 ## Search Algorithm
 
