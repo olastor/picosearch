@@ -25,10 +25,17 @@ export type StorageDriver = z.input<typeof StorageDriverSchema>;
 
 const StorageDriverOptionsSchema = z.union([
   z.literal('localstorage'),
+  z.literal('indexeddb'),
   z.discriminatedUnion('type', [
     z.object({
       type: z.literal('localstorage'),
       key: z.string(),
+    }),
+    z.object({
+      type: z.literal('indexeddb'),
+      key: z.string(),
+      dbName: z.string().optional(),
+      storeName: z.string().optional(),
     }),
     z.object({
       type: z.literal('custom'),

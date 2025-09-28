@@ -7,6 +7,9 @@ export const DEFAULT_ID_FIELD = 'id';
 
 export const DEFAULT_STORAGE_DRIVER_KEY = 'picosearch';
 
+export const DEFAULT_INDEXEDDB_DB_NAME = 'picosearch';
+export const DEFAULT_INDEXEDDB_STORE_NAME = 'data';
+
 export const UNSERIALIZABLE_OPTIONS = [
   'storageDriver',
   'tokenizer',
