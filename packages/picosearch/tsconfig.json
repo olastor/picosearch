@@ -1,4 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*", "benchmark/*"]
+  "include": ["src/**/*", "benchmark/*"],
+  "compilerOptions": {
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator",
+      "dom"
+    ]
+  }
 }
