@@ -23,26 +23,41 @@ const StorageDriverSchema = z.object({
 
 export type StorageDriver = z.input<typeof StorageDriverSchema>;
 
-const StorageDriverOptionsSchema = z.union([
-  z.literal('localstorage'),
-  z.literal('indexeddb'),
-  z.discriminatedUnion('type', [
-    z.object({
-      type: z.literal('localstorage'),
-      key: z.string(),
-    }),
-    z.object({
-      type: z.literal('indexeddb'),
-      key: z.string(),
-      dbName: z.string().optional(),
-      storeName: z.string().optional(),
-    }),
-    z.object({
-      type: z.literal('custom'),
-      driver: StorageDriverSchema,
-    }),
-  ]),
-]);
+const StorageDriverOptionsSchema = z
+  .union([
+    z.literal('localstorage'),
+    z.literal('indexeddb'),
+    z.discriminatedUnion('type', [
+      z.object({
+        type: z.literal('localstorage'),
+        key: z.string().default('picosearch'),
+      }),
+      z.object({
+        type: z.literal('indexeddb'),
+        key: z.string().default('picosearch'),
+        dbName: z.string().default('picosearch'),
+        storeName: z.string().default('data'),
+      }),
+      z.object({
+        type: z.literal('custom'),
+        driver: StorageDriverSchema,
+      }),
+    ]),
+  ])
+  .transform((val) => {
+    if (val === 'localstorage') {
+      return { type: 'localstorage' as const, key: 'picosearch' };
+    }
+    if (val === 'indexeddb') {
+      return {
+        type: 'indexeddb' as const,
+        key: 'picosearch',
+        dbName: 'picosearch',
+        storeName: 'data',
+      };
+    }
+    return val;
+  });
 
 const SearchIndexSchema = z.object({
   /**

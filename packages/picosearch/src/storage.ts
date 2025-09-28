@@ -1,8 +1,3 @@
-import {
-  DEFAULT_INDEXEDDB_DB_NAME,
-  DEFAULT_INDEXEDDB_STORE_NAME,
-  DEFAULT_STORAGE_DRIVER_KEY,
-} from './constants';
 import type { ParsedOptions, StorageDriver } from './schemas';
 import type { Document, IStorageDriver } from './types';
 
@@ -33,10 +28,10 @@ export class IndexedDBStorageDriver implements IStorageDriver {
   private storeName: string;
   private key: string;
 
-  constructor(key: string, dbName?: string, storeName?: string) {
+  constructor(key: string, dbName: string, storeName: string) {
     this.key = key;
-    this.dbName = dbName ?? DEFAULT_INDEXEDDB_DB_NAME;
-    this.storeName = storeName ?? DEFAULT_INDEXEDDB_STORE_NAME;
+    this.dbName = dbName;
+    this.storeName = storeName;
   }
 
   private async openDB(): Promise<IDBDatabase> {
@@ -113,17 +108,6 @@ export const getStorageDriver = <T extends Document>(
   const { storageDriver } = opts;
   if (!storageDriver) {
     return undefined;
-  }
-
-  if (typeof storageDriver === 'string') {
-    switch (storageDriver) {
-      case 'localstorage':
-        return new LocalStorageDriver(DEFAULT_STORAGE_DRIVER_KEY);
-      case 'indexeddb':
-        return new IndexedDBStorageDriver(DEFAULT_STORAGE_DRIVER_KEY);
-      default:
-        throw new Error(`Unknown storage driver: ${storageDriver}`);
-    }
   }
 
   switch (storageDriver.type) {
