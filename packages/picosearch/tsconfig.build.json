@@ -1,7 +1,14 @@
 {
   "extends": "../../tsconfig.build.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator",
+      "dom"
+    ]
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts"]

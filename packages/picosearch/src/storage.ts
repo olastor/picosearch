@@ -39,12 +39,12 @@ export class IndexedDBStorageDriver implements IStorageDriver {
     this.storeName = storeName ?? DEFAULT_INDEXEDDB_STORE_NAME;
   }
 
-  private async openDB(): Promise<unknown> {
+  private async openDB(): Promise<IDBDatabase> {
     return new Promise((resolve, reject) => {
       const indexedDB =
         typeof globalThis !== 'undefined'
-          ? // biome-ignore lint/suspicious/noExplicitAny: IndexedDB not available in Node.js types
-            (globalThis as any).indexedDB
+          ? (globalThis as typeof globalThis & { indexedDB?: IDBFactory })
+              .indexedDB
           : undefined;
       if (!indexedDB) {
         reject(new Error('IndexedDB is not available in this environment'));
@@ -56,9 +56,8 @@ export class IndexedDBStorageDriver implements IStorageDriver {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
 
-      // biome-ignore lint/suspicious/noExplicitAny: IndexedDB event types not available in Node.js
-      request.onupgradeneeded = (event: any) => {
-        const db = event.target.result;
+      request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
+        const db = (event.target as IDBOpenDBRequest).result;
         if (!db.objectStoreNames.contains(this.storeName)) {
           db.createObjectStore(this.storeName);
         }
@@ -68,8 +67,7 @@ export class IndexedDBStorageDriver implements IStorageDriver {
 
   async get(): Promise<string> {
     const db = await this.openDB();
-    // biome-ignore lint/suspicious/noExplicitAny: IndexedDB types not available in Node.js
-    const transaction = (db as any).transaction([this.storeName], 'readonly');
+    const transaction = db.transaction([this.storeName], 'readonly');
     const store = transaction.objectStore(this.storeName);
     const request = store.get(this.key);
 
@@ -84,8 +82,7 @@ export class IndexedDBStorageDriver implements IStorageDriver {
 
   async persist(value: string): Promise<void> {
     const db = await this.openDB();
-    // biome-ignore lint/suspicious/noExplicitAny: IndexedDB types not available in Node.js
-    const transaction = (db as any).transaction([this.storeName], 'readwrite');
+    const transaction = db.transaction([this.storeName], 'readwrite');
     const store = transaction.objectStore(this.storeName);
     const request = store.put(value, this.key);
 
@@ -97,8 +94,7 @@ export class IndexedDBStorageDriver implements IStorageDriver {
 
   async delete(): Promise<void> {
     const db = await this.openDB();
-    // biome-ignore lint/suspicious/noExplicitAny: IndexedDB types not available in Node.js
-    const transaction = (db as any).transaction([this.storeName], 'readwrite');
+    const transaction = db.transaction([this.storeName], 'readwrite');
     const store = transaction.objectStore(this.storeName);
     const request = store.delete(this.key);
 
