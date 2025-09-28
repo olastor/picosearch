@@ -44,7 +44,8 @@ export class IndexedDBStorageDriver implements IStorageDriver {
       // biome-ignore lint/suspicious/noExplicitAny: IndexedDB not available in Node.js types
       const indexedDB = (globalThis as any).indexedDB;
       if (!indexedDB) {
-        throw new Error('IndexedDB is not available in this environment');
+        reject(new Error('IndexedDB is not available in this environment'));
+        return;
       }
 
       const request = indexedDB.open(this.dbName, 1);
@@ -63,24 +64,19 @@ export class IndexedDBStorageDriver implements IStorageDriver {
   }
 
   async get(): Promise<string> {
-    try {
-      const db = await this.openDB();
-      // biome-ignore lint/suspicious/noExplicitAny: IndexedDB types not available in Node.js
-      const transaction = (db as any).transaction([this.storeName], 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.get(this.key);
+    const db = await this.openDB();
+    // biome-ignore lint/suspicious/noExplicitAny: IndexedDB types not available in Node.js
+    const transaction = (db as any).transaction([this.storeName], 'readonly');
+    const store = transaction.objectStore(this.storeName);
+    const request = store.get(this.key);
 
-      return new Promise((resolve, reject) => {
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          const result = request.result;
-          resolve(result ?? '');
-        };
-      });
-    } catch (error) {
-      // Fallback to empty string if IndexedDB is not available or fails
-      return '';
-    }
+    return new Promise((resolve, reject) => {
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const result = request.result;
+        resolve(result ?? '');
+      };
+    });
   }
 
   async persist(value: string): Promise<void> {
