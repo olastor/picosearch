@@ -41,8 +41,12 @@ export class IndexedDBStorageDriver implements IStorageDriver {
 
   private async openDB(): Promise<unknown> {
     return new Promise((resolve, reject) => {
-      // biome-ignore lint/suspicious/noExplicitAny: IndexedDB not available in Node.js types
-      const indexedDB = (globalThis as any).indexedDB;
+      // Check if globalThis exists and has indexedDB
+      const indexedDB =
+        typeof globalThis !== 'undefined'
+          ? // biome-ignore lint/suspicious/noExplicitAny: IndexedDB not available in Node.js types
+            (globalThis as any).indexedDB
+          : undefined;
       if (!indexedDB) {
         reject(new Error('IndexedDB is not available in this environment'));
         return;
