@@ -5,6 +5,7 @@ import {
   DEFAULT_INDEXEDDB_DB_NAME,
   DEFAULT_INDEXEDDB_STORE_NAME,
   DEFAULT_STORAGE_DRIVER_KEY,
+  DEFAULT_FILESYSTEM_FILENAME,
   LANGUAGE_NAMES,
   PROCESSORS_BY_LANGUAGE,
 } from './constants';
@@ -33,6 +34,7 @@ const StorageDriverOptionsSchema = z
   .union([
     z.literal('localstorage'),
     z.literal('indexeddb'),
+    z.literal('filesystem'),
     z.discriminatedUnion('type', [
       z.object({
         type: z.literal('localstorage'),
@@ -43,6 +45,10 @@ const StorageDriverOptionsSchema = z
         key: z.string().default(DEFAULT_STORAGE_DRIVER_KEY),
         dbName: z.string().default(DEFAULT_INDEXEDDB_DB_NAME),
         storeName: z.string().default(DEFAULT_INDEXEDDB_STORE_NAME),
+      }),
+      z.object({
+        type: z.literal('filesystem'),
+        filename: z.string().default(DEFAULT_FILESYSTEM_FILENAME),
       }),
       z.object({
         type: z.literal('custom'),
@@ -60,6 +66,12 @@ const StorageDriverOptionsSchema = z
         key: DEFAULT_STORAGE_DRIVER_KEY,
         dbName: DEFAULT_INDEXEDDB_DB_NAME,
         storeName: DEFAULT_INDEXEDDB_STORE_NAME,
+      };
+    }
+    if (val === 'filesystem') {
+      return {
+        type: 'filesystem' as const,
+        filename: DEFAULT_FILESYSTEM_FILENAME,
       };
     }
     return val;

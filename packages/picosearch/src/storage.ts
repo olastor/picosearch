@@ -100,6 +100,124 @@ export class IndexedDBStorageDriver implements IStorageDriver {
   }
 }
 
+// Extend global interface to include File System Access API types
+declare global {
+  interface Window {
+    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
+    showOpenFilePicker?: (options?: OpenFilePickerOptions) => Promise<FileSystemFileHandle[]>;
+  }
+  
+  var showSaveFilePicker: ((options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>) | undefined;
+  var showOpenFilePicker: ((options?: OpenFilePickerOptions) => Promise<FileSystemFileHandle[]>) | undefined;
+}
+
+interface SaveFilePickerOptions {
+  suggestedName?: string;
+  types?: Array<{
+    description: string;
+    accept: Record<string, string[]>;
+  }>;
+}
+
+interface OpenFilePickerOptions {
+  multiple?: boolean;
+  types?: Array<{
+    description: string;
+    accept: Record<string, string[]>;
+  }>;
+}
+
+export class FileStorageDriver implements IStorageDriver {
+  private filename: string;
+  private fileHandle: FileSystemFileHandle | null = null;
+
+  constructor(filename: string) {
+    this.filename = filename;
+  }
+
+  private async ensureFileHandle(): Promise<FileSystemFileHandle> {
+    if (this.fileHandle) {
+      return this.fileHandle;
+    }
+
+    // Check if File System Access API is available
+    if (typeof globalThis === 'undefined' || !globalThis.showSaveFilePicker) {
+      throw new Error('File System Access API is not available in this environment');
+    }
+
+    // If no stored handle, we'll create the file on first persist
+    return this.requestFileAccess();
+  }
+
+  private async requestFileAccess(): Promise<FileSystemFileHandle> {
+    try {
+      // Check if the API is available
+      const showSaveFilePicker = globalThis.showSaveFilePicker;
+      if (!showSaveFilePicker) {
+        throw new Error('File System Access API is not supported');
+      }
+
+      // Request file access from user
+      const fileHandle = await showSaveFilePicker({
+        suggestedName: this.filename,
+        types: [{
+          description: 'JSON files',
+          accept: {
+            'application/json': ['.json'],
+          },
+        }],
+      });
+      
+      this.fileHandle = fileHandle;
+      return fileHandle;
+    } catch (error) {
+      throw new Error('User cancelled file access or File System Access API not supported');
+    }
+  }
+
+  async get(): Promise<string> {
+    try {
+      const fileHandle = await this.ensureFileHandle();
+      const file = await fileHandle.getFile();
+      return await file.text();
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return '';
+      }
+      // Return empty string if file doesn't exist or can't be read
+      return '';
+    }
+  }
+
+  async persist(value: string): Promise<void> {
+    try {
+      if (!this.fileHandle) {
+        this.fileHandle = await this.requestFileAccess();
+      }
+
+      const writable = await this.fileHandle.createWritable();
+      await writable.write(value);
+      await writable.close();
+    } catch (error) {
+      throw new Error(`Failed to persist data to file: ${error}`);
+    }
+  }
+
+  async delete(): Promise<void> {
+    try {
+      if (!this.fileHandle) {
+        return; // Nothing to delete
+      }
+
+      const writable = await this.fileHandle.createWritable();
+      await writable.write('');
+      await writable.close();
+    } catch (error) {
+      throw new Error(`Failed to delete file content: ${error}`);
+    }
+  }
+}
+
 // TODO: add more native storage driver like FileSystem
 
 export const getStorageDriver = <T extends Document>(
@@ -119,6 +237,8 @@ export const getStorageDriver = <T extends Document>(
         storageDriver.dbName,
         storageDriver.storeName,
       );
+    case 'filesystem':
+      return new FileStorageDriver(storageDriver.filename);
     case 'custom':
       return storageDriver.driver;
     default:
