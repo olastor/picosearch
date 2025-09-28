@@ -1,7 +1,13 @@
 import { RadixBKTreeMap } from '@picosearch/radix-bk-tree';
 import { z } from 'zod';
 import { type Document, defaultAnalyzer, defaultTokenizer } from '.';
-import { LANGUAGE_NAMES, PROCESSORS_BY_LANGUAGE } from './constants';
+import {
+  DEFAULT_INDEXEDDB_DB_NAME,
+  DEFAULT_INDEXEDDB_STORE_NAME,
+  DEFAULT_STORAGE_DRIVER_KEY,
+  LANGUAGE_NAMES,
+  PROCESSORS_BY_LANGUAGE,
+} from './constants';
 import type { RawTokenMarker, TokenInfo } from './types';
 
 // TODO: consider switching to zod/mini
@@ -30,13 +36,13 @@ const StorageDriverOptionsSchema = z
     z.discriminatedUnion('type', [
       z.object({
         type: z.literal('localstorage'),
-        key: z.string().default('picosearch'),
+        key: z.string().default(DEFAULT_STORAGE_DRIVER_KEY),
       }),
       z.object({
         type: z.literal('indexeddb'),
-        key: z.string().default('picosearch'),
-        dbName: z.string().default('picosearch'),
-        storeName: z.string().default('data'),
+        key: z.string().default(DEFAULT_STORAGE_DRIVER_KEY),
+        dbName: z.string().default(DEFAULT_INDEXEDDB_DB_NAME),
+        storeName: z.string().default(DEFAULT_INDEXEDDB_STORE_NAME),
       }),
       z.object({
         type: z.literal('custom'),
@@ -46,14 +52,14 @@ const StorageDriverOptionsSchema = z
   ])
   .transform((val) => {
     if (val === 'localstorage') {
-      return { type: 'localstorage' as const, key: 'picosearch' };
+      return { type: 'localstorage' as const, key: DEFAULT_STORAGE_DRIVER_KEY };
     }
     if (val === 'indexeddb') {
       return {
         type: 'indexeddb' as const,
-        key: 'picosearch',
-        dbName: 'picosearch',
-        storeName: 'data',
+        key: DEFAULT_STORAGE_DRIVER_KEY,
+        dbName: DEFAULT_INDEXEDDB_DB_NAME,
+        storeName: DEFAULT_INDEXEDDB_STORE_NAME,
       };
     }
     return val;
