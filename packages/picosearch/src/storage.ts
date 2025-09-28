@@ -100,6 +100,86 @@ export class IndexedDBStorageDriver implements IStorageDriver {
   }
 }
 
+export class FileStorageDriver implements IStorageDriver {
+  private fileName: string;
+  private directoryHandle: FileSystemDirectoryHandle | null = null;
+
+  constructor(fileName: string) {
+    this.fileName = fileName;
+  }
+
+  private async getDirectoryHandle(): Promise<FileSystemDirectoryHandle> {
+    if (this.directoryHandle) {
+      return this.directoryHandle;
+    }
+
+    // Check if File System Access API is available
+    if (!('showDirectoryPicker' in window)) {
+      throw new Error('File System Access API is not available in this environment');
+    }
+
+    try {
+      const directoryHandle = await (window as any).showDirectoryPicker();
+      this.directoryHandle = directoryHandle;
+      return directoryHandle;
+    } catch (error) {
+      throw new Error(`Failed to access directory: ${error}`);
+    }
+  }
+
+  private async getFileHandle(create: boolean = false): Promise<FileSystemFileHandle> {
+    const directoryHandle = await this.getDirectoryHandle();
+    
+    try {
+      return await directoryHandle.getFileHandle(this.fileName, { create });
+    } catch (error) {
+      if (!create && error instanceof DOMException && error.name === 'NotFoundError') {
+        // File doesn't exist, return empty content
+        throw error;
+      }
+      throw new Error(`Failed to access file ${this.fileName}: ${error}`);
+    }
+  }
+
+  async get(): Promise<string> {
+    try {
+      const fileHandle = await this.getFileHandle(false);
+      const file = await fileHandle.getFile();
+      return await file.text();
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'NotFoundError') {
+        // File doesn't exist, return empty string
+        return '';
+      }
+      throw error;
+    }
+  }
+
+  async persist(value: string): Promise<void> {
+    try {
+      const fileHandle = await this.getFileHandle(true);
+      const writable = await fileHandle.createWritable();
+      await writable.write(value);
+      await writable.close();
+    } catch (error) {
+      throw new Error(`Failed to persist data to file ${this.fileName}: ${error}`);
+    }
+  }
+
+  async delete(): Promise<void> {
+    try {
+      const directoryHandle = await this.getDirectoryHandle();
+      await directoryHandle.removeEntry(this.fileName);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'NotFoundError') {
+        // File doesn't exist, nothing to delete
+        return;
+      }
+      throw new Error(`Failed to delete file ${this.fileName}: ${error}`);
+    }
+  }
+}
+
 // TODO: add more native storage driver like FileSystem
 
 export const getStorageDriver = <T extends Document>(
@@ -119,6 +199,8 @@ export const getStorageDriver = <T extends Document>(
         storageDriver.dbName,
         storageDriver.storeName,
       );
+    case 'filesystem':
+      return new FileStorageDriver(storageDriver.fileName);
     case 'custom':
       return storageDriver.driver;
     default:

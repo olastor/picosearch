@@ -33,6 +33,7 @@ const StorageDriverOptionsSchema = z
   .union([
     z.literal('localstorage'),
     z.literal('indexeddb'),
+    z.literal('filesystem'),
     z.discriminatedUnion('type', [
       z.object({
         type: z.literal('localstorage'),
@@ -43,6 +44,10 @@ const StorageDriverOptionsSchema = z
         key: z.string().default(DEFAULT_STORAGE_DRIVER_KEY),
         dbName: z.string().default(DEFAULT_INDEXEDDB_DB_NAME),
         storeName: z.string().default(DEFAULT_INDEXEDDB_STORE_NAME),
+      }),
+      z.object({
+        type: z.literal('filesystem'),
+        fileName: z.string().default('picosearch-index.json'),
       }),
       z.object({
         type: z.literal('custom'),
@@ -60,6 +65,12 @@ const StorageDriverOptionsSchema = z
         key: DEFAULT_STORAGE_DRIVER_KEY,
         dbName: DEFAULT_INDEXEDDB_DB_NAME,
         storeName: DEFAULT_INDEXEDDB_STORE_NAME,
+      };
+    }
+    if (val === 'filesystem') {
+      return {
+        type: 'filesystem' as const,
+        fileName: 'picosearch-index.json',
       };
     }
     return val;
