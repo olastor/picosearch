@@ -20,7 +20,6 @@ import {
 import { autocomplete, search } from './search';
 import { getStorageDriver } from './storage';
 import type {
-  Analyzer,
   Document,
   IPicosearch,
   Patch,
@@ -28,12 +27,10 @@ import type {
   SearchResultWithDoc,
   SerializedInstance,
   SyncResult,
-  Tokenizer,
   UnserializableOptions,
 } from './types';
 import type { FetchMetadata } from './types';
 import { fetchFromRemote, getEmptyIndex, omit } from './util';
-
 
 export class Picosearch<T extends Document> implements IPicosearch<T> {
   private opts: Omit<ParsedOptions<T>, 'searchIndex'>;
