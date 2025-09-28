@@ -4,7 +4,14 @@
     "outDir": "dist/esm",
     "module": "esnext",
     "target": "es2022",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "lib": [
+      "es2024",
+      "ESNext.Array",
+      "ESNext.Collection",
+      "ESNext.Iterator",
+      "dom"
+    ]
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.spec.ts"]
