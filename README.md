@@ -111,7 +111,7 @@ Checkout the docs for how to specify extra options for these. You can also creat
 ```typescript
 const pico = new Picosearch({ language: 'english', storageDriver: { type: 'custom', driver: MyCustomDriver } });
 pico.insertMultipleDocuments(documents);
-await pico.persis()
+await pico.persist()
 ```
 
 To load an existing index from storage, simply call `.sync()`:
