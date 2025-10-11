@@ -70,6 +70,32 @@ pico.searchDocuments('fox').then(console.log)
 
 ## Advanced
 
+### Fetching documents on-demand
+
+By default, the documents are included in the search index, which makes it pretty big. Picosearch provides the option to exclude them from the index via `keepDocuments: false` and two options to instead fetch documents only when needed during search.
+
+**Option 1: Fetch documents via URL**
+
+```typescript
+const pico = new Picosearch<MyDoc>({ 
+  language: 'english',
+  keepDocuments: false,
+  fetchDocumentUrl: 'https://my-files/docs/{id}.json'
+});
+```
+
+Make sure that the URL contains `{id}` as a placeholder.
+
+**Option 2: Custom handler**
+
+```typescript
+const pico = new Picosearch<MyDoc>({ 
+  language: 'english',
+  keepDocuments: false,
+  getDocumentById: async (id: string) => { ... }
+});
+```
+
 ### Persistent Storage
 
 You can persist your search index to a local storage. Native storage drivers supported for the browser are: `localstorage` and `indexeddb`.
