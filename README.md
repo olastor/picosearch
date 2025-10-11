@@ -169,20 +169,19 @@ const pico = new Picosearch({
 
 ### JSON Serialization
 
-Indexes can be exported to and imported from JSON. This is useful, for example, for performing the more compute-heavy indexing offline when the search runtime is in the browser. It is very important that you **pass the same tokenizer and analyzer in the new instance** and don't change any other constructor options. Here's an example:
+Indexes can be exported to and imported from JSON. This is useful, for example, for performing the more compute-heavy indexing offline when the search runtime is in the browser. It is very important that if you have any functions as part of the constructor (e.g., `getDocumentById`, `analyzer`, `tokenzier`), you **pass the same functions** again and don't change any other constructor options. Here's an example:
 
 ```typescript
 import { Picosearch } from '@picosearch/picosearch';
-import * as englishOptions from '@picosearch/language-english';
-const pico = new Picosearch<Doc>({ ...englishOptions, keepDocuments: true });
+const getDocById = async (id: string) => ...
+const pico = new Picosearch<Doc>({ getDocumentById: getDocById, keepDocuments: true });
 // ...index documents
 
 const jsonIndex = pico.toJSON() 
 
-const fromSerialized = new Picosearch<Doc>({ ...englishOptions, jsonIndex });
+// non-function options like `keepDocuments` are preserved in the JSON index
+const fromSerialized = new Picosearch<Doc>({ getDocumentById: getDocById, jsonIndex });
 ```
-
-Beware of the `keepDocuments` option! You might want to change it to `false` if you only need the index for search and can get individual documents at runtime via their ID another way.
 
 ## Benchmark
 
