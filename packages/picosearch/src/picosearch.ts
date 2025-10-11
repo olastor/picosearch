@@ -330,6 +330,7 @@ export class Picosearch<T extends Document> implements IPicosearch<T> {
     }
 
     if (persist && !dryRun) {
+      // TODO: don't persist when only loaded from storage
       const { success } = await this.persist();
       result.hasWrittenToStorage = success;
     }
