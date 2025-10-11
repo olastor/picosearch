@@ -72,7 +72,7 @@ pico.searchDocuments('fox').then(console.log)
 
 ### Fetching documents on-demand
 
-By default, the documents are included in the search index, which makes it pretty big. Picosearch provides the option to exclude them from the index via `keepDocuments: false` and two options to instead fetch documents only when needed during search.
+By default, the documents are included in the search index, which makes it pretty big. Picosearch provides the option to exclude them from the index via `keepDocuments: false` and two options to instead fetch documents only when needed at query time.
 
 **Option 1: Fetch documents via URL**
 
