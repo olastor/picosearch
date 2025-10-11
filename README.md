@@ -114,6 +114,10 @@ Call `.sync()` subsequently to check if new updates are available in the remote 
 
 Note that you can combine syncing and persisting, `.sync()` already takes care of that if a storage is configured.
 
+**Example:**
+
+![Example Deployment](./docs/images/example-deployment.png)
+
 ### Custom Language Preprocessing
 
 You can also provide a custom tokenizer (for splitting a document into words/tokens) and analyzer (processing a single token before indexing it). Just implement the types `Tokenizer` and `Analyzer` and provide these implementations to the constructor. Example:
