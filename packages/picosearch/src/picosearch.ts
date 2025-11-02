@@ -23,6 +23,7 @@ import type {
   Analyzer,
   Document,
   IPicosearch,
+  JSONSerializable,
   Patch,
   SearchResult,
   SearchResultWithDoc,
@@ -350,7 +351,7 @@ export class Picosearch<T extends Document> implements IPicosearch<T> {
       },
       opts: omit(this.opts, UNSERIALIZABLE_OPTIONS),
     } satisfies SerializedInstance<T> & {
-      opts: Record<string, number | string | string[] | boolean | undefined>;
+      opts: Record<string, JSONSerializable>;
     };
 
     return JSON.stringify(jsonObj);

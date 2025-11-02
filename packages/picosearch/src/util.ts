@@ -3,6 +3,11 @@ import type { SearchIndex } from './schemas';
 import type {
   Document,
   FetchMetadata,
+  FlattenedJSONObject,
+  JSONConvertible,
+  JSONObject,
+  JSONPrimitive,
+  JSONSerializable,
   RawTokenMarker,
   TokenInfo,
 } from './types';
@@ -29,26 +34,6 @@ export const getAutoFuzziness = (word: string): number => {
 
 export function assert(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
-}
-
-// ref: https://github.com/radashi-org/radashi/blob/main/src/object/omit.ts
-export function omit<T, TKeys extends keyof T>(
-  obj: T,
-  keys: readonly TKeys[],
-): Omit<T, TKeys> {
-  if (!obj) {
-    return {} as Omit<T, TKeys>;
-  }
-  if (!keys || keys.length === 0) {
-    return obj as Omit<T, TKeys>;
-  }
-  return keys.reduce(
-    (acc, key) => {
-      delete acc[key];
-      return acc;
-    },
-    { ...obj },
-  );
 }
 
 export const getEmptyIndex = <T extends Document>(): SearchIndex<T> => ({
@@ -150,3 +135,65 @@ export function generateRandomString(
   }
   return result;
 }
+
+export function omit<T, TKeys extends keyof T>(
+  obj: T,
+  keys: readonly TKeys[],
+): Omit<T, TKeys> {
+  if (!obj) {
+    return {} as Omit<T, TKeys>;
+  }
+  if (!keys || keys.length === 0) {
+    return obj as Omit<T, TKeys>;
+  }
+
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key]) => !keys.includes(key as TKeys)),
+  ) as Omit<T, TKeys>;
+}
+
+const isJSONPrimitive = (value: JSONSerializable): value is JSONPrimitive => {
+  return (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    value === null ||
+    value === undefined
+  );
+};
+
+const isJSONConvertible = (
+  value: JSONSerializable,
+): value is JSONConvertible => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'toJSON' in value &&
+    typeof value.toJSON === 'function'
+  );
+};
+
+export const flatten = (obj: JSONObject): FlattenedJSONObject => {
+  const result: FlattenedJSONObject = Object.create(null);
+  const stack: [string, JSONSerializable][] = Object.entries(obj);
+  while (stack.length > 0) {
+    const item = stack.shift();
+    if (!item) continue;
+    const [key, value] = item;
+
+    const isLeaf = isJSONPrimitive(value) || isJSONConvertible(value);
+
+    if (isLeaf) {
+      result[key] = value;
+      continue;
+    }
+
+    stack.push(
+      ...Object.entries(value).map<[string, JSONSerializable]>(
+        ([subKey, subValue]) => [`${key}.${subKey}`, subValue],
+      ),
+    );
+  }
+
+  return result;
+};

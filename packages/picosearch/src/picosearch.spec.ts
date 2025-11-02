@@ -56,16 +56,35 @@ describe('Picosearch', () => {
     });
 
     it('should insert only selected fields', async () => {
-      const searchIndex = new Picosearch({ indexedFields: ['content'] });
+      const searchIndex = new Picosearch({
+        indexedFields: ['content.text', 'content.names.0.1'],
+      });
       const documents = [
-        { id: '1', content: 'hello world', title: '' },
-        { id: '2', content: 'hello world', title: 'title' },
+        {
+          id: '1',
+          content: { text: 'hello world', title: 'Henry' },
+          title: '',
+        },
+        {
+          id: '2',
+          content: { text: 'hello world', names: [['Hugo', 'Henry'], 'Lina'] },
+          title: 'title',
+        },
       ];
       searchIndex.insertMultipleDocuments(documents);
       await expect(searchIndex.searchDocuments('hello')).resolves.toHaveLength(
         2,
       );
+      const henry = await searchIndex.searchDocuments('Henry');
+      expect(henry).toHaveLength(1);
+      expect(henry[0]).toHaveProperty('id', '2');
       await expect(searchIndex.searchDocuments('title')).resolves.toHaveLength(
+        0,
+      );
+      await expect(searchIndex.searchDocuments('Hugo')).resolves.toHaveLength(
+        0,
+      );
+      await expect(searchIndex.searchDocuments('Lina')).resolves.toHaveLength(
         0,
       );
     });

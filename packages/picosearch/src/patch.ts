@@ -1,6 +1,6 @@
 import type { ParsedOptions, SearchIndex } from './schemas';
 import type { Document, Patch, PatchChange, TokenInfo } from './types';
-import { assert } from './util';
+import { assert, flatten } from './util';
 
 export const createPatch =
   <T extends Document>(opts: ParsedOptions<T>, searchIndex: SearchIndex<T>) =>
@@ -18,27 +18,27 @@ export const createPatch =
 
     for (let i = 0; i < add.length; i++) {
       const document = add[i];
+      const flattenedDoc = flatten(document);
 
-      if (
-        typeof document[opts.idField] !== 'string' ||
-        document[opts.idField] === ''
-      ) {
+      const idValue = flattenedDoc[opts.idField];
+      if (typeof idValue !== 'string' || !idValue) {
         throw new Error(
-          `The document's required '${opts.idField}' field is missing or not a string. Got: ${document[opts.idField]}`,
+          `The document's required '${opts.idField}' field is missing or not a string. Got: ${idValue}`,
         );
       }
 
-      if (searchIndex.originalDocumentIds.includes(document[opts.idField])) {
-        throw new Error(`Duplicate document ID: ${document[opts.idField]}`);
+      if (searchIndex.originalDocumentIds.includes(idValue)) {
+        throw new Error(`Duplicate document ID: ${idValue}`);
       }
 
       const internalDocId = searchIndex.originalDocumentIds.length + i;
-      change.addedOriginalDocumentIds.push(document[opts.idField]);
+      change.addedOriginalDocumentIds.push(idValue);
 
-      for (const field of Object.keys(document)) {
+      for (const [field, value] of Object.entries(flattenedDoc)) {
         if (
           field === opts.idField ||
-          (opts.indexedFields && !opts.indexedFields.includes(field))
+          typeof value !== 'string' ||
+          (opts.indexedFields && !opts.indexedFields?.includes(field))
         ) {
           continue;
         }
@@ -57,7 +57,7 @@ export const createPatch =
         // so their frequency doesn't matter and we use a set
         const fieldTokensRaw: Set<string> = new Set<string>();
 
-        opts.tokenizer(document[field]).forEach((rawToken) => {
+        opts.tokenizer(value).forEach((rawToken) => {
           const token = opts.analyzer(rawToken);
           if (!token) return;
           fieldTokens.push(token);

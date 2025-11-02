@@ -5,5 +5,6 @@ import type {
   ITrieMap,
   TrieMapNode,
 } from './types';
+
 export { TrieMap, Trie };
 export type { IFuzzySearchOptions, TrieMapNode, ITrieMap, ITrie };

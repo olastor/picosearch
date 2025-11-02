@@ -45,8 +45,27 @@ export type GetDocumentById<T extends Document> = (
   documentId: string,
 ) => Promise<T | null>;
 
-// TODO: allow more complex documents structures
-export type Document = Record<string, string>;
+export type JSONPrimitive = number | string | boolean | undefined | null;
+export type JSONArray = JSONSerializable[];
+export type JSONObject = { [key: string]: JSONSerializable };
+
+// this will cause trouble when serializing/deserializing, but
+// some users might not do it and still pass classes or similar objects.
+// as long as they are serializable via an toJSON method, they are allowed
+export type JSONConvertible = { toJSON(): JSONSerializable };
+
+export type JSONSerializable =
+  | JSONPrimitive
+  | JSONConvertible
+  | JSONArray
+  | JSONObject;
+
+export type FlattenedJSONObject = Record<
+  string,
+  JSONPrimitive | JSONConvertible
+>;
+
+export type Document = JSONObject;
 
 export type Preprocessor = (doc: string) => string[];
 
