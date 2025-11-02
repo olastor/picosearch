@@ -17,7 +17,6 @@ Minimalistic full-text search implemented in Typescript.
 **Not yet implemented:**
 
 - [ ] Snippets
-- [ ] Search in nested fields of documents
 - [ ] Patch updates for modifying or deleting documents
 
 ## Installation

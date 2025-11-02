@@ -14,7 +14,7 @@ The following types of data of a Picosearch instance can be distinguished:
 
 ### Document
 
-A document is a JSON-serializable object with a unique identifier. Indexed fields must be a string value (TODO: nested paths) and must not be located inside an array. There must exist a top-level string ID field.
+A document is a JSON-serializable object with a unique identifier. Indexed fields must be an object key or path in dot notiation (e.g., "content.title", "orders.0.name"). There must exist a top-level string ID field.
 
 ### Search Index
 
