@@ -105,16 +105,12 @@ export const search =
       }
     }
 
-    const k1 = queryOptions.bm25.k1;
-    const b = queryOptions.bm25.b;
-
     const offset = queryOptions.offset;
     const results = scoreBM25F<T>(
       queryTokens,
       searchIndex,
       fieldWeights,
-      k1,
-      b,
+      queryOptions,
     ).slice(
       offset,
       queryOptions.limit ? offset + queryOptions.limit : undefined,

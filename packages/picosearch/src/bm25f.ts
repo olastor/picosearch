@@ -1,4 +1,4 @@
-import type { SearchIndex } from './schemas';
+import type { ParsedQueryOptions, SearchIndex } from './schemas';
 import type { Document } from './types';
 
 /**
@@ -14,8 +14,7 @@ export const scoreBM25F = <T extends Document>(
   queryTokens: Set<string>,
   index: SearchIndex<T>,
   fieldWeights: { [fieldId: number]: number },
-  k1: number,
-  b: number,
+  queryOptions: Pick<ParsedQueryOptions, 'bm25' | 'idFilter'>,
 ): [internalId: number, score: number][] => {
   const docScores: { [doc: number]: number } = {};
 
@@ -35,6 +34,7 @@ export const scoreBM25F = <T extends Document>(
     )
     .reduce((acc, x) => acc + x, 0);
 
+  const { idFilter } = queryOptions;
   for (const token of queryTokens) {
     const dlTilde: { [docId: number]: number } = {};
     const tfTilde: { [docId: number]: number } = {};
@@ -46,6 +46,7 @@ export const scoreBM25F = <T extends Document>(
         if (item === 1) continue;
         const [docId, fieldId, frequency] = item;
         if (!selectedFieldIds.includes(fieldId)) continue;
+        if (idFilter && !idFilter(index.originalDocumentIds[docId])) continue;
         docIds.add(docId);
         tfTilde[docId] =
           (tfTilde[docId] || 0) + fieldWeights[fieldId] * frequency;
@@ -55,6 +56,7 @@ export const scoreBM25F = <T extends Document>(
       }
     }
 
+    const { k1, b } = queryOptions.bm25;
     const df = docIds.size;
     for (const docId of docIds) {
       const idf = Math.log(1 + (numberOfDocs - df + 0.5) / (df + 0.5));

@@ -21,6 +21,7 @@ export type RawTokenMarker = 1;
 // TODO: patch type delete
 // TODO: patch type gone
 // TODO: patch type invalidate (maybe)
+// TODO: include total number of hits in result when limit is applied
 
 export type PatchChange<T extends Document> = {
   type: 'add';

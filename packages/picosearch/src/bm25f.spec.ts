@@ -28,8 +28,7 @@ describe('scoreBM25F', () => {
       queryTokens,
       index as SearchIndex<TestDoc>,
       fieldWeights,
-      k1,
-      b,
+      { bm25: { k1, b } },
     );
     expect(results).toHaveLength(2);
     expect(results[0][0]).toEqual(1);

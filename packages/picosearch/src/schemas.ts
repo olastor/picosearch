@@ -359,6 +359,12 @@ export const QueryOptionsSchema = z.object({
       after: z.string().default('</b>'),
     })
     .default({ before: '<b>', after: '</b>' }),
+
+  /**
+   * A filter function that when specified limits the documents to be searched
+   * to the ones that pass the filter.
+   */
+  idFilter: z.function({ input: [z.string()], output: z.boolean() }).optional(),
 });
 
 export type QueryOptions = z.input<typeof QueryOptionsSchema>;
