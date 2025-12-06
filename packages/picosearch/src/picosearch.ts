@@ -17,7 +17,7 @@ import {
   type SyncOptions,
   SyncOptionsSchema,
 } from './schemas';
-import { autocomplete, search } from './search';
+import { autocomplete, getDocumentByInternalId, search } from './search';
 import { getStorageDriver } from './storage';
 import type {
   Analyzer,
@@ -211,6 +211,13 @@ export class Picosearch<T extends Document> implements IPicosearch<T> {
    */
   insertMultipleDocuments(documents: T[]): void {
     this.applyPatch(this.createPatch({ add: documents }), false);
+  }
+
+  async getDocumentById(id: string): Promise<T | null> {
+    // TODO: if this method becomes frequently used, improve lookup perf
+    const internalId = this.searchIndex.originalDocumentIds.indexOf(id);
+    if (internalId < 0) return null;
+    return getDocumentByInternalId(internalId, this.opts, this.searchIndex);
   }
 
   /**
