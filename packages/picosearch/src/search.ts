@@ -44,7 +44,12 @@ export const search =
     const queryTokens: Set<string> = new Set<string>();
     const getDocumentById =
       queryOptions.getDocumentById ?? opts.getDocumentById;
-    if (queryOptions.includeDocs && !opts.keepDocuments && !getDocumentById) {
+
+    if (
+      queryOptions.includeDocs &&
+      !opts.keepDocuments &&
+      !(getDocumentById || opts.fetchDocumentUrl)
+    ) {
       throw new Error(
         'getDocumentById is required because `keepDocuments` was false during indexing and the index does not contain the documents!',
       );
