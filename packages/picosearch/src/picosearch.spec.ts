@@ -304,29 +304,29 @@ describe('Picosearch', () => {
 
     it('searchDocuments with idFilter', async () => {
       const documents = [
-        { id: '1', title: 'greetings world', content: 'hello' },
-        { id: '2', title: 'farewell', content: 'goodbye world' },
-        { id: '3', title: 'another world', content: 'hello world' },
+        { id: 'id-1', title: 'greetings world', content: 'hello' },
+        { id: 'id-2', title: 'farewell', content: 'goodbye world' },
+        { id: 'id-3', title: 'another world', content: 'hello world' },
       ];
       searchIndex.insertMultipleDocuments(documents);
-      
+
       // Test filtering to only include documents with odd IDs
       const resultsOddIds = await searchIndex.searchDocuments('world', {
-        idFilter: (id: string) => parseInt(id) % 2 === 1,
-        includeDocs: true,
+        idFilter: (id: string) => Number.parseInt(id[3]) % 2 === 1,
+        includeDocs: false,
       });
       expect(resultsOddIds.length).toBe(2);
-      expect(resultsOddIds.map(r => r.id).sort()).toEqual(['1', '3']);
-      
+      expect(resultsOddIds.map((r) => r.id).sort()).toEqual(['id-1', 'id-3']);
+
       // Test filtering to only include specific document
       const resultsSpecific = await searchIndex.searchDocuments('world', {
-        idFilter: (id: string) => id === '2',
+        idFilter: (id: string) => id === 'id-2',
         includeDocs: true,
       });
       expect(resultsSpecific.length).toBe(1);
-      expect(resultsSpecific[0].id).toBe('2');
+      expect(resultsSpecific[0].id).toBe('id-2');
       expect(resultsSpecific[0].doc?.title).toBe('farewell');
-      
+
       // Test filtering that excludes all documents
       const resultsNone = await searchIndex.searchDocuments('world', {
         idFilter: (id: string) => id === 'nonexistent',
