@@ -34,7 +34,6 @@ export const scoreBM25F = <T extends Document>(
     )
     .reduce((acc, x) => acc + x, 0);
 
-  const { idFilter } = queryOptions;
   for (const token of queryTokens) {
     const dlTilde: { [docId: number]: number } = {};
     const tfTilde: { [docId: number]: number } = {};
@@ -46,7 +45,6 @@ export const scoreBM25F = <T extends Document>(
         if (item === 1) continue;
         const [docId, fieldId, frequency] = item;
         if (!selectedFieldIds.includes(fieldId)) continue;
-        if (idFilter && !idFilter(index.originalDocumentIds[docId])) continue;
         docIds.add(docId);
         tfTilde[docId] =
           (tfTilde[docId] || 0) + fieldWeights[fieldId] * frequency;
@@ -70,7 +68,12 @@ export const scoreBM25F = <T extends Document>(
     }
   }
 
-  return Object.entries(docScores)
+  const results = Object.entries(docScores)
     .sort((a, b) => b[1] - a[1])
-    .map(([id, score]) => [Number(id), score]);
+    .map(([id, score]) => [Number(id), score] as [number, number]);
+
+  const { idFilter } = queryOptions;
+  return idFilter
+    ? results.filter(([id]) => idFilter(index.originalDocumentIds[id]))
+    : results;
 };
