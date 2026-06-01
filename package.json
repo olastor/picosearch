@@ -8,6 +8,6 @@
     "@types/node": "^22.15.30",
     "fast-check": "^4.1.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.2"
+    "vitest": "^4.1.0"
   }
 }
